@@ -15,7 +15,6 @@ namespace EasySave.App.Models
         public BackupType Type { get; set; }
         public BackupState State { get; set; }
 
-
         public event EventHandler<BackupProgressEventArgs> OnProgressUpdate;
 
         public event EventHandler<(string Src, string Dest, long Size, float Time)> OnFileCopied;
@@ -28,7 +27,9 @@ namespace EasySave.App.Models
             Type = type;
             State = BackupState.Inactive;
         }
-
+        public BackupJob()
+        {
+        }
         public void Execute()
         {
             State = BackupState.Active;

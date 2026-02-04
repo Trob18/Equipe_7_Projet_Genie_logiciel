@@ -7,14 +7,17 @@ using EasySave.Log.Interfaces;
 using EasySave.Log.Models;
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
+using System.IO;
 
 namespace EasySave.App.Controllers
 {
     public class BackupController
     {
-        private readonly List<BackupJob> _backupJobs;
+        private List<BackupJob> _backupJobs;
         private readonly ILogger _logger;
 
+        private readonly string _jobsFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "jobs.json");
         public BackupController()
         {
             _backupJobs = new List<BackupJob>();
@@ -23,9 +26,40 @@ namespace EasySave.App.Controllers
                 AppSettings.Instance.LogFormat,
                 AppSettings.Instance.LogDirectory
             );
+
+            LoadJobs();
         }
+        private void LoadJobs()
+        {
+            if (File.Exists(_jobsFilePath))
+            {
+                try
+                {
+                    string json = File.ReadAllText(_jobsFilePath);
+                    _backupJobs = JsonSerializer.Deserialize<List<BackupJob>>(json) ?? new List<BackupJob>();
+                }
+                catch
+                {
+                    _backupJobs = new List<BackupJob>();
+                }
+            }
+            else
+            {
+                _backupJobs = new List<BackupJob>();
+            }
 
-
+            foreach (var job in _backupJobs)
+            {
+                job.OnProgressUpdate += OnJobProgressUpdate;
+                job.OnFileCopied += OnJobFileCopied;
+            }
+        }
+        public void SaveJobs()
+        {
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            string json = JsonSerializer.Serialize(_backupJobs, options);
+            File.WriteAllText(_jobsFilePath, json);
+        }
         public List<BackupJob> GetJobs()
         {
             return _backupJobs;
@@ -41,6 +75,7 @@ namespace EasySave.App.Controllers
             newJob.OnFileCopied += OnJobFileCopied;
 
             _backupJobs.Add(newJob);
+            SaveJobs();
         }
 
         public void ExecuteJob(int index)
