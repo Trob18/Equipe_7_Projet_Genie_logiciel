@@ -96,6 +96,7 @@ namespace EasySave.App
                         {
                             view.DisplayError("Invalid language.");
                         }
+                        Console.Clear();
                         break;
 
                     case "6":
