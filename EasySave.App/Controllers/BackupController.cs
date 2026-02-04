@@ -1,14 +1,15 @@
-﻿using EasySave.App.Config;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using EasySave.App.Config;
 using EasySave.App.Enumerations;
 using EasySave.App.Models;
 using EasySave.App.State;
-using EasySave.Log;
 using EasySave.Log.Interfaces;
 using EasySave.Log.Models;
-using System;
-using System.Collections.Generic;
-using System.Text.Json;
-using System.IO;
+using EasySave.Log; 
 
 namespace EasySave.App.Controllers
 {
@@ -18,6 +19,7 @@ namespace EasySave.App.Controllers
         private readonly ILogger _logger;
 
         private readonly string _jobsFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "jobs.json");
+
         public BackupController()
         {
             _backupJobs = new List<BackupJob>();
@@ -29,6 +31,7 @@ namespace EasySave.App.Controllers
 
             LoadJobs();
         }
+
         private void LoadJobs()
         {
             if (File.Exists(_jobsFilePath))
@@ -54,42 +57,60 @@ namespace EasySave.App.Controllers
                 job.OnFileCopied += OnJobFileCopied;
             }
         }
+
         public void SaveJobs()
         {
             var options = new JsonSerializerOptions { WriteIndented = true };
             string json = JsonSerializer.Serialize(_backupJobs, options);
             File.WriteAllText(_jobsFilePath, json);
         }
+
         public List<BackupJob> GetJobs()
         {
             return _backupJobs;
         }
 
-
         public void CreateJob(string name, string source, string target, BackupType type)
         {
+            // Limite à 5 jobs (CdC)
+            if (_backupJobs.Count >= 5)
+                throw new InvalidOperationException("Maximum number of backup jobs is 5.");
+
             var newJob = new BackupJob(name, source, target, type);
 
             newJob.OnProgressUpdate += OnJobProgressUpdate;
-
             newJob.OnFileCopied += OnJobFileCopied;
 
             _backupJobs.Add(newJob);
             SaveJobs();
         }
 
-        public void ExecuteJob(int index)
+        // IMPORTANT : ici "jobId" = numéro métier 1..5
+        public void ExecuteJob(int jobId)
         {
-            if (index >= 0 && index < _backupJobs.Count)
-            {
-                var job = _backupJobs[index];
+            int index = jobId - 1; // mapping 1..5 -> 0..4
 
-                UpdateState(job, "ACTIVE", 0, 0, "Initialisation...");
+            if (index < 0 || index >= _backupJobs.Count)
+                throw new ArgumentException($"Job {jobId} not found.", nameof(jobId));
 
-                job.Execute();
+            var job = _backupJobs[index];
 
-                UpdateState(job, "INACTIVE", 100, 0, "Terminé");
-            }
+            UpdateState(job, "ACTIVE", 0, 0, "Initialisation...");
+
+            job.Execute();
+
+            UpdateState(job, "INACTIVE", 100, 0, "Terminé");
+        }
+
+        public void DeleteJob(int jobId)
+        {
+            int index = jobId - 1;
+
+            if (index < 0 || index >= _backupJobs.Count)
+                throw new ArgumentException($"Job {jobId} not found.", nameof(jobId));
+
+            _backupJobs.RemoveAt(index);
+            SaveJobs();
         }
 
         private void OnJobFileCopied(object sender, (string Src, string Dest, long Size, float Time) data)
@@ -130,17 +151,6 @@ namespace EasySave.App.Controllers
             };
 
             StateSettings.UpdateState(stateLog);
-        }
-
-
-        public void DeleteJob(int index)
-        {
-            if (index >= 0 && index < _backupJobs.Count)
-            {
-                _backupJobs.RemoveAt(index);
-
-                SaveJobs();
-            }
         }
     }
 }

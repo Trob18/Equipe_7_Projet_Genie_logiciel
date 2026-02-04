@@ -25,18 +25,24 @@ namespace EasySave.App.Views
         public void DisplayJobs(List<BackupJob> jobs)
         {
             Console.WriteLine("\n--- LIST ---");
-            if (jobs.Count == 0)
+
+            if (jobs == null || jobs.Count == 0)
             {
                 Console.WriteLine("No jobs available.");
+                return;
             }
-            else
+
+            for (int i = 0; i < jobs.Count; i++)
             {
-                for (int i = 0; i < jobs.Count; i++)
-                {
-                    Console.WriteLine($"{i}. {jobs[i].Name} [{jobs[i].Type}] -> {jobs[i].SourceDirectory}");
-                }
+                var job = jobs[i];
+
+                // ✅ Affichage 1..N (pas 0..N-1)
+                int displayNumber = i + 1;
+
+                Console.WriteLine($"{displayNumber}. {job.Name} | {job.Type} | {job.SourceDirectory} -> {job.TargetDirectory}");
             }
         }
+
 
         public string AskForInput(string resourceKey)
         {
