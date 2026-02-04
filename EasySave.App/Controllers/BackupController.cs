@@ -102,8 +102,7 @@ namespace EasySave.App.Controllers
                 SourceFile = data.Src,
                 TargetFile = data.Dest,
                 FileSize = data.Size,
-                TransferTime = data.Time,
-                Timestamp = DateTime.Now
+                TransferTime = data.Time
             };
 
             _logger.WriteLog(logEntry);
