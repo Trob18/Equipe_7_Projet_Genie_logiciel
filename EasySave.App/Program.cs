@@ -79,8 +79,26 @@ namespace EasySave.App
                         }
                         break;
 
-
                     case "5":
+                        string langChoice = view.AskForInput("ChangeLang");
+
+                        if (langChoice.ToLower() == "fr")
+                        {
+                            Config.AppSettings.Instance.Language = Language.Francais;
+                            Console.WriteLine(Config.ResourceSettings.GetString("LangChanged"));
+                        }
+                        else if (langChoice.ToLower() == "en")
+                        {
+                            Config.AppSettings.Instance.Language = Language.English;
+                            Console.WriteLine(Config.ResourceSettings.GetString("LangChanged"));
+                        }
+                        else
+                        {
+                            view.DisplayError("Invalid language.");
+                        }
+                        break;
+
+                    case "6":
                         running = false;
                         break;
 
