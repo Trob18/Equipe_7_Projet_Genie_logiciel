@@ -61,7 +61,7 @@ Le développement est organisé en **trois livrables successifs** :
 - Framework : **.NET 8**
 - IDE : **Visual Studio 2022+**
 - Gestion de version : **Git / GitHub**
-- Modélisation : **UML (ArgoUML)**
+- Modélisation : **UML**
 
 
 ## Qualité et contraintes
@@ -71,18 +71,13 @@ Le projet respecte les contraintes suivantes :
 - Lisibilité et maintenabilité
 - Architecture en couches
 - Fonctions courtes et cohérentes
-- Pas de duplication inutile
-- Documentation et Release Notes obligatoires
 
 
 ## Organisation du dépôt
 
-- `/src` : code source de l’application EasySave
-- `/EasyLog` : librairie de logging (DLL)
-- `/docs` : documentation, UML, notes projet
+- `/EasySave.App` : code source de l’application EasySave
+- `/EasySave.Log` : librairie de logging (DLL)
 - `/README.md` : description du projet
-- `/ReleaseNotes` : notes de version
-
 
 ## Équipe projet
 
