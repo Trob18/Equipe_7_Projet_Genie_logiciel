@@ -23,6 +23,7 @@ namespace EasySave.App.Config
             { "EnterTarget", "Entrez le dossier de destination :" },
             { "EnterType", "Type de sauvegarde (1: Complet, 2: Différentiel) :" },
             { "Success", "Opération réussie !" },
+            { "MaxJobsReached", "Erreur : Vous ne pouvez pas créer plus de 5 travaux." },
             { "Error", "Erreur : " }
         };
 
@@ -44,6 +45,7 @@ namespace EasySave.App.Config
             { "EnterTarget", "Enter target directory:" },
             { "EnterType", "Backup Type (1: Full, 2: Differential):" },
             { "Success", "Operation successful!" },
+            { "MaxJobsReached", "Error: You cannot create more than 5 backup jobs." },
             { "Error", "Error: " }
         };
 

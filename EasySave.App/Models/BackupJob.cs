@@ -30,6 +30,7 @@ namespace EasySave.App.Models
         public BackupJob()
         {
         }
+
         public void Execute()
         {
             State = BackupState.Active;
@@ -44,50 +45,48 @@ namespace EasySave.App.Models
             int totalFiles = allFiles.Length;
             int processedCount = 0;
 
+            long totalSize = 0;
+            foreach (var f in allFiles) totalSize += new FileInfo(f).Length;
+
+            long currentSizeProcessed = 0;
+
             foreach (var filePath in allFiles)
             {
                 string relativePath = Path.GetRelativePath(SourceDirectory, filePath);
                 string targetFilePath = Path.Combine(TargetDirectory, relativePath);
-
                 string targetDir = Path.GetDirectoryName(targetFilePath);
-                if (!Directory.Exists(targetDir))
-                {
-                    Directory.CreateDirectory(targetDir);
-                }
+
+                if (!Directory.Exists(targetDir)) Directory.CreateDirectory(targetDir);
+
+                long currentFileSize = new FileInfo(filePath).Length;
 
                 bool shouldCopy = false;
-
-                if (Type == BackupType.Full)
-                {
-                    shouldCopy = true;
-                }
+                if (Type == BackupType.Full) shouldCopy = true;
                 else if (Type == BackupType.Differential)
                 {
-                    if (!File.Exists(targetFilePath))
-                    {
+                    if (!File.Exists(targetFilePath) || File.GetLastWriteTime(filePath) > File.GetLastWriteTime(targetFilePath))
                         shouldCopy = true;
-                    }
-                    else
-                    {
-                        DateTime srcTime = File.GetLastWriteTime(filePath);
-                        DateTime destTime = File.GetLastWriteTime(targetFilePath);
-                        if (srcTime > destTime) shouldCopy = true;
-                    }
                 }
 
                 if (shouldCopy)
                 {
                     Stopwatch stopwatch = Stopwatch.StartNew();
-
                     File.Copy(filePath, targetFilePath, true);
-
                     stopwatch.Stop();
-
-                    OnFileCopied?.Invoke(this, (filePath, targetFilePath, new FileInfo(filePath).Length, stopwatch.ElapsedMilliseconds));
+                    OnFileCopied?.Invoke(this, (filePath, targetFilePath, currentFileSize, stopwatch.ElapsedMilliseconds));
                 }
-
                 processedCount++;
-                OnProgressUpdate?.Invoke(this, new BackupProgressEventArgs(totalFiles, processedCount, Path.GetFileName(filePath)));
+                currentSizeProcessed += currentFileSize;
+
+                OnProgressUpdate?.Invoke(this, new BackupProgressEventArgs(
+                    totalFiles,
+                    processedCount,
+                    totalSize,
+                    currentSizeProcessed,
+                    Path.GetFileName(filePath),
+                    filePath,
+                    targetFilePath
+                ));
             }
 
             State = BackupState.Inactive;

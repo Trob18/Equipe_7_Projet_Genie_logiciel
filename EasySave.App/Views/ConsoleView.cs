@@ -34,7 +34,7 @@ namespace EasySave.App.Views
             {
                 for (int i = 0; i < jobs.Count; i++)
                 {
-                    Console.WriteLine($"{i}. {jobs[i].Name} [{jobs[i].Type}] -> {jobs[i].SourceDirectory}");
+                    Console.WriteLine($"{i+1}. {jobs[i].Name} [{jobs[i].Type}] -> {jobs[i].SourceDirectory}");
                 }
             }
         }
