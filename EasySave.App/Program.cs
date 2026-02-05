@@ -112,6 +112,7 @@ namespace EasySave.App
                             Config.AppSettings.Instance.Language = Language.English;
                         }
 
+                        Config.AppSettings.Instance.Save();
                         Console.Clear();
                         break;
 
