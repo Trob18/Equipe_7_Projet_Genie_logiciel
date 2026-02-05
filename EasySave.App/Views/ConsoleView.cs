@@ -25,7 +25,7 @@ namespace EasySave.App.Views
 
         public void DisplayJobs(List<BackupJob> jobs)
         {
-            Console.WriteLine("\n--- LIST ---");
+            Console.WriteLine("\n--- "+ ResourceSettings.GetString("LIST") +" ---");
             if (jobs.Count == 0)
             {
                 Console.WriteLine("No jobs available.");
