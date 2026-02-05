@@ -28,7 +28,7 @@ namespace EasySave.App.Views
             Console.WriteLine("\n--- "+ ResourceSettings.GetString("LIST") +" ---");
             if (jobs.Count == 0)
             {
-                Console.WriteLine("No jobs available.");
+                Console.WriteLine(ResourceSettings.GetString("NoJobAvailed"));
             }
             else
             {
