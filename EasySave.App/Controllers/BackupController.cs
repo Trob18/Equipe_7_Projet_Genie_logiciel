@@ -15,17 +15,15 @@ namespace EasySave.App.Controllers
     public class BackupController
     {
         private List<BackupJob> _backupJobs;
-        private readonly ILogger _logger;
+        private ILogger _logger;
 
         private readonly string _jobsFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "jobs.json");
+        public event Action<string, int> OnGlobalProgress;
         public BackupController()
         {
             _backupJobs = new List<BackupJob>();
 
-            _logger = LoggerCrea.CreateLogger(
-                AppSettings.Instance.LogFormat,
-                AppSettings.Instance.LogDirectory
-            );
+            _logger = LoggerCrea.CreateLogger(AppSettings.Instance.LogDirectory);
 
             LoadJobs();
         }
@@ -68,6 +66,10 @@ namespace EasySave.App.Controllers
 
         public void CreateJob(string name, string source, string target, BackupType type)
         {
+            if (_backupJobs.Count >= 5)
+            {
+                throw new Exception(ResourceSettings.GetString("MaxJobsReached"));
+            }
             var newJob = new BackupJob(name, source, target, type);
 
             newJob.OnProgressUpdate += OnJobProgressUpdate;
@@ -84,11 +86,11 @@ namespace EasySave.App.Controllers
             {
                 var job = _backupJobs[index];
 
-                UpdateState(job, "ACTIVE", 0, 0, "Initialisation...");
+                UpdateState(job, "ACTIVE", 0, 0, 0, 0, 0, "Lancement...", "");
 
                 job.Execute();
 
-                UpdateState(job, "INACTIVE", 100, 0, "Terminé");
+                UpdateState(job, "NON ACTIVE", 100, 0, 0, 0, 0, "Terminé", "");
             }
         }
 
@@ -111,21 +113,42 @@ namespace EasySave.App.Controllers
         private void OnJobProgressUpdate(object sender, BackupProgressEventArgs e)
         {
             var job = (BackupJob)sender;
-            UpdateState(job, "ACTIVE", e.Percentage, e.TotalFiles - e.FilesProcessed, e.CurrentFileName);
+
+            int filesLeft = e.TotalFiles - e.FilesProcessed;
+            long sizeLeft = e.TotalSize - e.SizeProcessed;
+
+            UpdateState(
+                job,
+                "ACTIVE",
+                e.Percentage,
+                e.TotalFiles,
+                e.TotalSize,
+                filesLeft,
+                sizeLeft,
+                e.CurrentSourcePath,
+                e.CurrentTargetPath
+            );
+
+            OnGlobalProgress?.Invoke(job.Name, e.Percentage);
         }
 
-        private void UpdateState(BackupJob job, string status, int progress, int left, string currentFile)
+        private void UpdateState(BackupJob job, string status, int progress, int totalFiles, long totalSize, int filesLeft, long sizeLeft, string currentSrc, string currentDest)
         {
             var stateLog = new StateLog
             {
                 BackupName = job.Name,
-                SourceFilePath = currentFile,
-                TargetFilePath = job.TargetDirectory,
+                Timestamp = DateTime.Now,
                 State = status,
-                TotalFilesToCopy = 0,
-                NbFilesLeftToDo = left,
+
+                TotalFilesToCopy = totalFiles,
+                TotalFilesSize = totalSize,
                 Progression = progress,
-                Timestamp = DateTime.Now
+
+                NbFilesLeftToDo = filesLeft,
+                NbFilesSizeLeftToDo = sizeLeft,
+
+                SourceFilePath = currentSrc,
+                TargetFilePath = currentDest
             };
 
             StateSettings.UpdateState(stateLog);

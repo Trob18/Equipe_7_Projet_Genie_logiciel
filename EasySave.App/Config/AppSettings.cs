@@ -13,7 +13,6 @@ namespace EasySave.App.Config
         private AppSettings()
         {
             Language = Language.English;
-            LogFormat = "json";
 
             LogDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
 
@@ -37,7 +36,6 @@ namespace EasySave.App.Config
 
 
         public Language Language { get; set; }
-        public string LogFormat { get; set; }
         public string LogDirectory { get; set; }
         public string StateDirectory { get; set; }
     }
