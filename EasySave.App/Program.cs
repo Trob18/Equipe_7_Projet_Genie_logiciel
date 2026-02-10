@@ -1,9 +1,11 @@
-﻿using EasySave.App.Controllers;
-using EasySave.App.Views;
+﻿using EasySave.App.Config;
+using EasySave.App.Controllers;
 using EasySave.App.Enumerations;
+using EasySave.App.Views;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Intrinsics.X86;
 
 namespace EasySave.App
 {
@@ -74,7 +76,7 @@ namespace EasySave.App
                         var jobs = controller.GetJobs();
                         view.DisplayJobs(jobs);
 
-                        Console.WriteLine("Indiquez les numéros à lancer (ex: 1-3;5) ou 'all' :");
+                        Console.Write("Indiquez les numéros à lancer (ex: 1-3;5) ou 'all' : ");
                         string input = Console.ReadLine();
 
                         List<int> selection = ParseJobSelection(input, jobs.Count);
@@ -100,28 +102,50 @@ namespace EasySave.App
                         break;
 
                     case "5":
+                        Console.WriteLine("\n----------------------------------");
+                        Console.WriteLine(Config.ResourceSettings.GetString("Settings"));
+                        Console.WriteLine("----------------------------------");
                         Console.WriteLine(Config.ResourceSettings.GetString("ConfigMenu"));
+                        Console.WriteLine("----------------------------------");
+                        Console.Write(Config.ResourceSettings.GetString("Choice") + " : ");
                         string conf = Console.ReadLine();
+                        Console.WriteLine("----------------------------------\n");
 
                         if (conf == "1")
                         {
-                            string langChoice = view.AskForInput("ChangeLang");
-                            if (langChoice.ToLower() == "fr") Config.AppSettings.Instance.Language = Language.Francais;
-                            else if (langChoice.ToLower() == "en") Config.AppSettings.Instance.Language = Language.English;
+                            Console.WriteLine("----------------------------------");
+                            Console.WriteLine(Config.ResourceSettings.GetString("ChangeLang"));
+                            Console.WriteLine("----------------------------------");
+                            Console.WriteLine(Config.ResourceSettings.GetString("OptionLang"));
+                            Console.WriteLine("----------------------------------");
+                            Console.Write(ResourceSettings.GetString("Choice") + " : ");
+                            string langChoice = Console.ReadLine();
+                            if (langChoice.ToLower() == "1") Config.AppSettings.Instance.Language = Language.Francais;
+                            else if (langChoice.ToLower() == "2") Config.AppSettings.Instance.Language = Language.English;
                             Console.Clear();
+                            Console.WriteLine("\n----------------------------------");
+                            Console.WriteLine(ResourceSettings.GetString("LangChanged"));
+                            Console.WriteLine("----------------------------------");
                         }
                         else if (conf == "2")
                         {
-                            Console.WriteLine("Format (json/xml) ?");
+                            Console.WriteLine("----------------------------------");
+                            Console.WriteLine(Config.ResourceSettings.GetString("ChangeFormat"));
+                            Console.WriteLine("----------------------------------");
+                            Console.WriteLine(Config.ResourceSettings.GetString("OptionFormat"));
+                            Console.WriteLine("----------------------------------");
+                            Console.Write(ResourceSettings.GetString("Choice") + " : ");
                             string fmt = Console.ReadLine();
-
-                            if (fmt == "xml" || fmt == "json")
+                            if (fmt == "1" || fmt == "2")
                             {
+                                if (fmt == "1") { fmt = "json"; } else { fmt = "xml"; }
                                 Config.AppSettings.Instance.LogFormat = fmt;
 
                                 controller.UpdateLogger();
-
-                                Console.WriteLine($"Format changed to {fmt} !");
+                                Console.Clear();
+                                Console.WriteLine("\n----------------------------------");
+                                Console.WriteLine(ResourceSettings.GetString("FormatChanged") + $"{fmt} !");
+                                Console.WriteLine("----------------------------------");
                             }
                         }
                         break;

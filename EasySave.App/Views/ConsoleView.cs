@@ -15,10 +15,6 @@ namespace EasySave.App.Views
             Console.WriteLine("----------------------------------");
             Console.WriteLine(ResourceSettings.GetString("Option1"));
             Console.WriteLine(ResourceSettings.GetString("Option2"));
-            Console.WriteLine(ResourceSettings.GetString("Option3"));
-            Console.WriteLine(ResourceSettings.GetString("OptionDelete"));
-            Console.WriteLine(ResourceSettings.GetString("OptionConfig"));
-            Console.WriteLine(ResourceSettings.GetString("Option4"));
             Console.WriteLine("----------------------------------");
             Console.Write(ResourceSettings.GetString("Choice") + ": ");
         }
