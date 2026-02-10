@@ -7,7 +7,7 @@ namespace EasySave.App.Config
     {
         private static readonly Dictionary<string, string> _fr = new Dictionary<string, string>
         {
-            { "Welcome", "Bienvenue dans EasySave v1.0" },
+            { "Welcome", "Bienvenue dans EasySave v1.1" },
             { "MenuTitle", "MENU PRINCIPAL" },
             { "Option1", "1. Lister les travaux de sauvegarde" },
             { "Option2", "2. Créer un travail de sauvegarde" },
@@ -34,7 +34,7 @@ namespace EasySave.App.Config
 
         private static readonly Dictionary<string, string> _en = new Dictionary<string, string>
         {
-            { "Welcome", "Welcome to EasySave v1.0" },
+            { "Welcome", "Welcome to EasySave v1.1" },
             { "MenuTitle", "MAIN MENU" },
             { "Option1", "1. List backup jobs" },
             { "Option2", "2. Create backup job" },
