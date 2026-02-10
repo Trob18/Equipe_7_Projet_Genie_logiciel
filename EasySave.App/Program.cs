@@ -100,20 +100,30 @@ namespace EasySave.App
                         break;
 
                     case "5":
+                        Console.WriteLine(Config.ResourceSettings.GetString("ConfigMenu"));
+                        string conf = Console.ReadLine();
 
-                        string langChoice = view.AskForInput("ChangeLang");
-
-                        if (langChoice.ToLower() == "fr")
+                        if (conf == "1")
                         {
-                            Config.AppSettings.Instance.Language = Language.Francais;
+                            string langChoice = view.AskForInput("ChangeLang");
+                            if (langChoice.ToLower() == "fr") Config.AppSettings.Instance.Language = Language.Francais;
+                            else if (langChoice.ToLower() == "en") Config.AppSettings.Instance.Language = Language.English;
+                            Console.Clear();
                         }
-                        else if (langChoice.ToLower() == "en")
+                        else if (conf == "2")
                         {
-                            Config.AppSettings.Instance.Language = Language.English;
-                        }
+                            Console.WriteLine("Format (json/xml) ?");
+                            string fmt = Console.ReadLine();
 
-                        Config.AppSettings.Instance.Save();
-                        Console.Clear();
+                            if (fmt == "xml" || fmt == "json")
+                            {
+                                Config.AppSettings.Instance.LogFormat = fmt;
+
+                                controller.UpdateLogger();
+
+                                Console.WriteLine($"Format changed to {fmt} !");
+                            }
+                        }
                         break;
 
                     case "6":

@@ -27,6 +27,7 @@ namespace EasySave.App.Config
             { "EnterTarget", "Entrez le dossier de destination :" },
             { "EnterType", "Type de sauvegarde (1: Complet, 2: Différentiel) :" },
             { "Success", "Opération réussie !" },
+            { "ConfigMenu", "1. Changer la langue\n2. Format des logs (json/xml)" },
             { "MaxJobsReached", "Erreur : Vous ne pouvez pas créer plus de 5 travaux." },
             { "Error", "Erreur : " }
         };
@@ -53,6 +54,7 @@ namespace EasySave.App.Config
             { "EnterTarget", "Enter target directory: " },
             { "EnterType", "Backup Type (1: Full, 2: Differential): " },
             { "Success", "Operation successful!" },
+            { "ConfigMenu", "1. Change Language\n2. Log Format (json/xml)" },
             { "MaxJobsReached", "Error: You cannot create more than 5 backup jobs." },
             { "Error", "Error: " }
         };

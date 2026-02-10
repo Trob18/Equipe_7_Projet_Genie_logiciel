@@ -6,28 +6,44 @@ using System.Text.Json.Serialization;
 
 namespace EasySave.App.Config
 {
-    public sealed class AppSettings
+    public class AppSettings
     {
         private static AppSettings _instance;
-
         private static readonly object _lock = new object();
-        private readonly string _configFilePath;
 
-        private const string CURRENT_VERSION = "1.0"; // Version de référence
+        private readonly string _configFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
 
-        private AppSettings()
+
+        private Language _language;
+        public Language Language
         {
-            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            string configFolder = Path.Combine(appDataPath, "EasySave");
-
-            _configFilePath = Path.Combine(configFolder, "config.json");
-
-            Language = Language.English;
-            LogDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
-            StateDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "state");
-
-            LoadOrCreateConfiguration(configFolder);
+            get => _language;
+            set
+            {
+                if (_language != value)
+                {
+                    _language = value;
+                    SaveSettings();
+                }
+            }
         }
+
+        private string _logFormat;
+        public string LogFormat
+        {
+            get => _logFormat;
+            set
+            {
+                if (_logFormat != value)
+                {
+                    _logFormat = value;
+                    SaveSettings();
+                }
+            }
+        }
+
+        public string LogDirectory { get; set; }
+        public string StateDirectory { get; set; }
 
         public static AppSettings Instance
         {
@@ -44,77 +60,55 @@ namespace EasySave.App.Config
             }
         }
 
-
-        public Language Language { get; set; }
-        public string LogDirectory { get; set; }
-        public string StateDirectory { get; set; }
-
-        public void Save()
+        private AppSettings()
         {
-            try
-            {
-                var options = new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                    Converters = { new JsonStringEnumConverter() }
-                };
-
-                var configToSave = new ConfigDto
-                {
-                    Version = CURRENT_VERSION,
-                    Language = this.Language
-                };
-
-                string jsonString = JsonSerializer.Serialize(configToSave, options);
-                File.WriteAllText(_configFilePath, jsonString);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Erreur critique : Impossible de générer la config : {ex.Message}");
-            }
+            _language = Language.English;
+            _logFormat = "json";
+            LogDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+            StateDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            LoadSettings();
         }
 
-        private void LoadOrCreateConfiguration(string configFolder)
-        {
-            if (!Directory.Exists(configFolder)) Directory.CreateDirectory(configFolder);
 
+        private void LoadSettings()
+        {
             if (File.Exists(_configFilePath))
             {
                 try
                 {
-                    var options = new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true,
-                        Converters = { new JsonStringEnumConverter() }
-                    };
+                    string json = File.ReadAllText(_configFilePath);
 
-                    string jsonContent = File.ReadAllText(_configFilePath);
-                    var configData = JsonSerializer.Deserialize<ConfigDto>(jsonContent, options);
+                    var savedSettings = JsonSerializer.Deserialize<AppSettingsDto>(json);
 
-                    if (configData != null && configData.Version == CURRENT_VERSION)
+                    if (savedSettings != null)
                     {
-                        this.Language = configData.Language;
-                    }
-                    else
-                    {
-                        Save();
+                        _language = savedSettings.Language;
+                        _logFormat = savedSettings.LogFormat;
                     }
                 }
                 catch
                 {
-                    Save();
                 }
-            }
-            else
-            {
-                Save();
             }
         }
 
-        private class ConfigDto
+        private void SaveSettings()
         {
-            public string Version { get; set; }
-            public Language Language { get; set; }
+            var settingsToSave = new AppSettingsDto
+            {
+                Language = _language,
+                LogFormat = _logFormat
+            };
+
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            string json = JsonSerializer.Serialize(settingsToSave, options);
+            File.WriteAllText(_configFilePath, json);
         }
+    }
+
+    public class AppSettingsDto
+    {
+        public Language Language { get; set; }
+        public string LogFormat { get; set; }
     }
 }

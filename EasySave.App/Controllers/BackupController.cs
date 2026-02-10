@@ -23,7 +23,10 @@ namespace EasySave.App.Controllers
         {
             _backupJobs = new List<BackupJob>();
 
-            _logger = LoggerCrea.CreateLogger(AppSettings.Instance.LogDirectory);
+            _logger = LoggerCrea.CreateLogger(
+                AppSettings.Instance.LogFormat,
+                AppSettings.Instance.LogDirectory
+            );
 
             LoadJobs();
         }
@@ -163,6 +166,13 @@ namespace EasySave.App.Controllers
 
                 SaveJobs();
             }
+        }
+        public void UpdateLogger()
+        {
+            _logger = LoggerCrea.CreateLogger(
+                AppSettings.Instance.LogFormat,
+                AppSettings.Instance.LogDirectory
+            );
         }
     }
 }

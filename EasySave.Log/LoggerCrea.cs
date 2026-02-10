@@ -5,8 +5,12 @@ namespace EasySave.Log
 {
     public static class LoggerCrea
     {
-        public static ILogger CreateLogger(string logDirectory)
+        public static ILogger CreateLogger(string format, string logDirectory)
         {
+            if (format?.ToLower() == "xml")
+            {
+                return new XmlLogger(logDirectory);
+            }
             return new JsonLogger(logDirectory);
         }
     }

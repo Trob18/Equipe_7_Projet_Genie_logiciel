@@ -10,9 +10,6 @@ namespace EasySave.App.State
     {
         private static readonly object _writeLock = new object();
 
-        /// <summary>
-        /// Met à jour l'état d'un travail spécifique dans le fichier state.json
-        /// </summary>
         public static void UpdateState(StateLog stateLog)
         {
             lock (_writeLock)
