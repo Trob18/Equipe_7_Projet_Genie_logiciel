@@ -16,9 +16,9 @@ namespace EasySave.App.Config
             { "Settings", "RÉGLAGES" },
             { "NoJobAvailed", "Aucun travail disponible." },
             { "ChangeLang", "CHANGER LA LANGUE" },
-            { "OptionLang", "1. Français\n2. English"},
+            { "OptionLang", "1. Français\n2. English\n3. Annuler"},
             { "ChangeFormat", "CHANGER LE FORMAT" },
-            { "OptionFormat", "1. JSON\n2. XML" },
+            { "OptionFormat", "1. JSON\n2. XML\n3. Annuler" },
             { "LangChanged",  "Langue changée en Français !" },
             { "FormatChanged", "Le format a été changé en " },
             { "EnterJobID", "Entrez le numéro du travail à supprimer :" },
@@ -28,7 +28,7 @@ namespace EasySave.App.Config
             { "EnterTarget", "Entrez le dossier de destination :" },
             { "EnterType", "Type de sauvegarde (1: Complet, 2: Différentiel) :" },
             { "Success", "Opération réussie !" },
-            { "ConfigMenu", "1. Changer la langue\n2. Format des logs (json/xml)" },
+            { "ConfigMenu", "1. Changer la langue\n2. Format des logs (json/xml)\n3. Retour au menu principal" },
             { "MaxJobsReached", "Erreur : Vous ne pouvez pas créer plus de 5 travaux." },
             { "Error", "Erreur : " }
         };

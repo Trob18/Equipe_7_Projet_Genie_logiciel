@@ -45,6 +45,7 @@ namespace EasySave.App
                 return;
             }
             bool running = true;
+            bool retour_menu = false;
             Console.WriteLine(Config.ResourceSettings.GetString("Welcome"));
 
             while (running)
@@ -62,9 +63,9 @@ namespace EasySave.App
                         try
                         {
                             Console.WriteLine("----------------------------------\n");
-                            string name = view.AskForInput("EnterName"); Console.WriteLine();
-                            string source = view.AskForInput("EnterSource"); Console.WriteLine();
-                            string target = view.AskForInput("EnterTarget"); Console.WriteLine();
+                            string name = view.AskForInput("EnterName"); Console.Write(" ");
+                            string source = view.AskForInput("EnterSource"); Console.Write(" ");
+                            string target = view.AskForInput("EnterTarget"); Console.Write(" ");
                             BackupType type = view.AskForBackupType();
                             controller.CreateJob(name, source, target, type);
                             view.DisplaySuccess();
@@ -109,7 +110,6 @@ namespace EasySave.App
                         Console.WriteLine("----------------------------------");
                         Console.Write(Config.ResourceSettings.GetString("Choice") + " : ");
                         string conf = Console.ReadLine();
-                        Console.WriteLine("----------------------------------\n");
 
                         if (conf == "1")
                         {
@@ -148,6 +148,8 @@ namespace EasySave.App
                                 Console.WriteLine("----------------------------------");
                             }
                         }
+                        else { retour_menu = true; }
+
                         break;
 
                     case "6":
@@ -157,8 +159,11 @@ namespace EasySave.App
 
                 if (running)
                 {
-                    Console.WriteLine("\nAppuyez sur Entrée...");
-                    Console.ReadLine();
+                    if(!retour_menu)
+                    {
+                        Console.WriteLine("\nAppuyez sur Entrée...");
+                        Console.ReadLine();
+                    }
                     Console.Clear();
                 }
             }
