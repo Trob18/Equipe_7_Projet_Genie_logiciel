@@ -1,11 +1,11 @@
-﻿using EasySave.App.Enumerations;
+﻿using EasySave.WPF.Enumerations;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
-namespace EasySave.App.Models
+namespace EasySave.WPF.Models
 {
     public class BackupJob
     {
@@ -17,7 +17,7 @@ namespace EasySave.App.Models
 
         public event EventHandler<BackupProgressEventArgs> OnProgressUpdate;
 
-        public event EventHandler<(string Src, string Dest, long Size, float Time)> OnFileCopied;
+        public event EventHandler<(string source, string target, long size, float time)> OnFileCopied;
 
         public BackupJob(string name, string source, string target, BackupType type)
         {

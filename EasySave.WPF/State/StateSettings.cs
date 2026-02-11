@@ -1,10 +1,10 @@
-﻿using EasySave.App.Config;
+﻿using EasySave.WPF.Config;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
-namespace EasySave.App.State
+namespace EasySave.WPF.State
 {
     public static class StateSettings
     {

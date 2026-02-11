@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace EasySave.App.State
+namespace EasySave.WPF.State
 {
     public class StateLog
     {

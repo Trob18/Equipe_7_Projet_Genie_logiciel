@@ -1,4 +1,4 @@
-﻿namespace EasySave.App.Enumerations
+﻿namespace EasySave.WPF.Enumerations
 {
     public enum Language
     {

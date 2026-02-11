@@ -1,10 +1,10 @@
-﻿using EasySave.App.Enumerations;
+﻿using EasySave.WPF.Enumerations;
 using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace EasySave.App.Config
+namespace EasySave.WPF.Config
 {
     public class AppSettings
     {

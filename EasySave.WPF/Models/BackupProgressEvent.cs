@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace EasySave.App.Models
+namespace EasySave.WPF.Models
 {
     public class BackupProgressEventArgs : EventArgs
     {
