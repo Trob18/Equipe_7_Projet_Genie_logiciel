@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace EasySave.App.Controllers
@@ -20,6 +21,9 @@ namespace EasySave.App.Controllers
 
         private readonly string _jobsFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "jobs.json");
         public event Action<string, int> OnGlobalProgress;
+
+        // Stop support
+        private CancellationTokenSource? _cts;
 
         public BackupController()
         {
@@ -82,6 +86,7 @@ namespace EasySave.App.Controllers
             SaveJobs();
         }
 
+        // Sync
         public void ExecuteJob(int index)
         {
             if (index >= 0 && index < _backupJobs.Count)
@@ -89,17 +94,31 @@ namespace EasySave.App.Controllers
                 var job = _backupJobs[index];
 
                 UpdateState(job, "ACTIVE", 0, 0, 0, 0, 0, "Lancement...", "");
-
                 job.Execute();
-
                 UpdateState(job, "NON ACTIVE", 100, 0, 0, 0, 0, "Terminé", "");
             }
         }
 
-        // Async wrapper 
+        // Async + token
         public Task ExecuteJobAsync(int index)
         {
-            return Task.Run(() => ExecuteJob(index));
+            _cts?.Cancel();
+            _cts?.Dispose();
+
+            _cts = new CancellationTokenSource();
+            var token = _cts.Token;
+
+            return Task.Run(() =>
+            {
+                token.ThrowIfCancellationRequested();
+                ExecuteJob(index); // stop "réel" viendra quand Execute() vérifiera token
+            }, token);
+        }
+
+        // Stop request
+        public void StopCurrentJob()
+        {
+            _cts?.Cancel();
         }
 
         private void OnJobFileCopied(object sender, (string Src, string Dest, long Size, float Time) data)
