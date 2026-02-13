@@ -266,12 +266,6 @@ namespace EasySave.WPF.ViewModels
 
         private void CreateJob()
         {
-            if (BackupJobs.Count >= 5)
-            {
-                MessageBox.Show("Max 5 jobs !", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
             if (string.IsNullOrWhiteSpace(JobName) || string.IsNullOrWhiteSpace(SourcePath) || string.IsNullOrWhiteSpace(TargetPath))
             {
                 StatusMessage = "Champs vides !";
