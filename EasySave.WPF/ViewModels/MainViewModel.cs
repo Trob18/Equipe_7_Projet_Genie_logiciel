@@ -355,16 +355,16 @@ namespace EasySave.WPF.ViewModels
                 {
                     try
                     {
-                        SelectedJob.Execute();
+                        job.Execute();
 
                         Application.Current.Dispatcher.Invoke(() =>
                         {
-                            StatusMessage = $"{SelectedJob.Name} terminé !";
+                            StatusMessage = $"{job.Name} terminé !";
                             ProgressValue = 100;
 
                             var finalState = new StateLog
                             {
-                                BackupName = SelectedJob.Name,
+                                BackupName = job.Name,
                                 Timestamp = DateTime.Now,
                                 State = "NON ACTIVE",
                                 Progression = 100
@@ -377,9 +377,13 @@ namespace EasySave.WPF.ViewModels
                         Application.Current.Dispatcher.Invoke(() =>
                         {
                             StatusMessage = $"Erreur : {ex.Message}";
-                            SelectedJob.State = BackupState.Error;
-                            ProgressValue = 0;
+                            job.State = BackupState.Error;
                         });
+                    }
+                    finally
+                    {
+                        job.OnProgressUpdate -= progressHandler;
+                        job.OnFileCopied -= fileCopiedHandler;
                     }
                 });
             }
