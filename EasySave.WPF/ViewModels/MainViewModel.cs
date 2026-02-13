@@ -7,10 +7,12 @@ using EasySave.WPF.State;
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows; // Pour Visibility
 using System.Windows.Input;
+using System.Diagnostics; // Added for Debug.WriteLine
 
 namespace EasySave.WPF.ViewModels
 {
@@ -42,6 +44,10 @@ namespace EasySave.WPF.ViewModels
 
         private string _newExtensionInput;
         public string NewExtensionInput { get => _newExtensionInput; set { _newExtensionInput = value; OnPropertyChanged(); } }
+        
+        public ObservableCollection<string> BlockedProcessesList { get; set; }
+        private string _newProcessInput;
+        public string NewProcessInput { get => _newProcessInput; set { _newProcessInput = value; OnPropertyChanged(); } }
 
         public bool EncryptAll
         {
@@ -116,6 +122,8 @@ namespace EasySave.WPF.ViewModels
         public ICommand ExecuteJobCommand { get; }
         public ICommand AddExtensionCommand { get; }
         public ICommand RemoveExtensionCommand { get; }
+        public ICommand AddProcessCommand { get; }
+        public ICommand RemoveProcessCommand { get; }
 
         public MainViewModel()
         {
@@ -135,12 +143,20 @@ namespace EasySave.WPF.ViewModels
                     .Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(ext => ext.ToLower().Trim())
             );
+            
+            BlockedProcessesList = new ObservableCollection<string>(
+                AppSettings.Instance.BlockedProcesses
+                    .Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(proc => proc.ToLower().Trim())
+            );
 
             CreateJobCommand = new RelayCommand(param => CreateJob());
             DeleteJobCommand = new RelayCommand(param => DeleteJob(), param => SelectedJob != null);
             ExecuteJobCommand = new RelayCommand(param => ExecuteJob(), param => SelectedJob != null);
             AddExtensionCommand = new RelayCommand(param => AddExtension());
             RemoveExtensionCommand = new RelayCommand(param => RemoveExtension(param as string), param => param is string);
+            AddProcessCommand = new RelayCommand(param => AddProcess());
+            RemoveProcessCommand = new RelayCommand(param => RemoveProcess(param as string), param => param is string);
 
             StatusMessage = ResourceSettings.GetString("StatusReady");
         }
@@ -211,6 +227,37 @@ namespace EasySave.WPF.ViewModels
         {
             AppSettings.Instance.EncryptedExtensions = string.Join(", ", EncryptedExtensionsList);
             // AppSettings.Instance.SaveSettings() is called automatically by the property setter
+        }
+        
+        private void AddProcess()
+        {
+            if (!string.IsNullOrWhiteSpace(NewProcessInput))
+            {
+                string newProc = NewProcessInput.ToLower().Trim();
+                // remove .exe if present
+                if (newProc.EndsWith(".exe")) newProc = newProc[..^4];
+
+                if (!BlockedProcessesList.Contains(newProc))
+                {
+                    BlockedProcessesList.Add(newProc);
+                    SaveBlockedProcesses();
+                    NewProcessInput = ""; // Clear input after adding
+                }
+            }
+        }
+
+        private void RemoveProcess(string process)
+        {
+            if (!string.IsNullOrWhiteSpace(process))
+            {
+                BlockedProcessesList.Remove(process);
+                SaveBlockedProcesses();
+            }
+        }
+
+        private void SaveBlockedProcesses()
+        {
+            AppSettings.Instance.BlockedProcesses = string.Join(", ", BlockedProcessesList);
         }
 
         private void CreateJob()
@@ -291,20 +338,37 @@ namespace EasySave.WPF.ViewModels
 
             await Task.Run(() =>
             {
-                SelectedJob.Execute();
+                try
+                {
+                    SelectedJob.Execute();
+
+                    // If successful, update UI on the main thread
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        StatusMessage = $"{SelectedJob.Name} terminé !";
+                        ProgressValue = 100;
+
+                        var finalState = new StateLog
+                        {
+                            BackupName = SelectedJob.Name,
+                            Timestamp = DateTime.Now,
+                            State = "NON ACTIVE",
+                            Progression = 100
+                        };
+                        StateSettings.UpdateState(finalState);
+                    });
+                }
+                catch (Exception ex)
+                {
+                    // If an error occurs, update UI on the main thread
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        StatusMessage = $"Erreur : {ex.Message}";
+                        SelectedJob.State = BackupState.Error;
+                        ProgressValue = 0;
+                    });
+                }
             });
-
-            StatusMessage = $"{SelectedJob.Name} terminé !";
-            ProgressValue = 100;
-
-            var finalState = new StateLog
-            {
-                BackupName = SelectedJob.Name,
-                Timestamp = DateTime.Now,
-                State = "NON ACTIVE",
-                Progression = 100
-            };
-            StateSettings.UpdateState(finalState);
         }
 
         public class LanguageProxy

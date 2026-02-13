@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using EasySave.WPF.Config; // Add this using directive
+using EasySave.WPF.Config;
 
 namespace EasySave.WPF.Models
 {
@@ -37,11 +37,35 @@ namespace EasySave.WPF.Models
         {
             State = BackupState.Active;
 
+            // Check for blocked processes defined in settings
+            var blockedProcessNames = AppSettings.Instance.BlockedProcesses
+                                          .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                          .Select(p => p.Trim().ToLower())
+                                          .ToList();
+
+            foreach (var processName in blockedProcessNames)
+            {
+                if (string.IsNullOrWhiteSpace(processName)) continue;
+
+                var processes = Process.GetProcessesByName(processName);
+                if (processes.Length > 0)
+                {
+                    // Dispose of the process objects
+                    foreach (var process in processes)
+                    {
+                        process.Dispose();
+                    }
+                    throw new IOException($"The process '{processName}' is running and must be closed before starting a backup.");
+                }
+            }
+
+
             if (!Directory.Exists(SourceDirectory))
             {
                 State = BackupState.Error;
                 return;
             }
+            var allFiles = Directory.GetFiles(SourceDirectory, "*.*", SearchOption.AllDirectories);
 
             // Get encrypted extensions from settings
             List<string> encryptedExtensions = AppSettings.Instance.EncryptedExtensions
@@ -49,7 +73,6 @@ namespace EasySave.WPF.Models
                                                     .Select(ext => ext.ToLower().Trim())
                                                     .ToList();
 
-            var allFiles = Directory.GetFiles(SourceDirectory, "*.*", SearchOption.AllDirectories);
             int totalFiles = allFiles.Length;
             int processedCount = 0;
 
