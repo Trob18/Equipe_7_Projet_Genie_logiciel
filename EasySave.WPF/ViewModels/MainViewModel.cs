@@ -13,7 +13,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using System.Diagnostics; // Added for Debug.WriteLine
+using System.Diagnostics;
 
 namespace EasySave.WPF.ViewModels
 {
@@ -239,14 +239,13 @@ namespace EasySave.WPF.ViewModels
             if (!string.IsNullOrWhiteSpace(NewProcessInput))
             {
                 string newProc = NewProcessInput.ToLower().Trim();
-                // remove .exe if present
                 if (newProc.EndsWith(".exe")) newProc = newProc[..^4];
 
                 if (!BlockedProcessesList.Contains(newProc))
                 {
                     BlockedProcessesList.Add(newProc);
                     SaveBlockedProcesses();
-                    NewProcessInput = ""; // Clear input after adding
+                    NewProcessInput = "";
                 }
             }
         }
@@ -360,57 +359,38 @@ namespace EasySave.WPF.ViewModels
 
                 await Task.Run(() =>
                 {
-                    job.Execute();
-                });
-
-                job.OnProgressUpdate -= progressHandler;
-                job.OnFileCopied -= fileCopiedHandler;
-
-                job.Progress = 100;
-
-                var finalState = new StateLog
-                {
-                    BackupName = job.Name,
-                    Timestamp = DateTime.Now,
-                    State = "NON ACTIVE",
-                    Progression = 100
-                };
-                StateSettings.UpdateState(finalState);
-
-            await Task.Run(() =>
-            {
-                try
-                {
-                    SelectedJob.Execute();
-
-                    // If successful, update UI on the main thread
-                    Application.Current.Dispatcher.Invoke(() =>
+                    try
                     {
-                        StatusMessage = $"{SelectedJob.Name} terminé !";
-                        ProgressValue = 100;
+                        SelectedJob.Execute();
 
-                        var finalState = new StateLog
+                        Application.Current.Dispatcher.Invoke(() =>
                         {
-                            BackupName = SelectedJob.Name,
-                            Timestamp = DateTime.Now,
-                            State = "NON ACTIVE",
-                            Progression = 100
-                        };
-                        StateSettings.UpdateState(finalState);
-                    });
-                }
-                catch (Exception ex)
-                {
-                    // If an error occurs, update UI on the main thread
-                    Application.Current.Dispatcher.Invoke(() =>
+                            StatusMessage = $"{SelectedJob.Name} terminé !";
+                            ProgressValue = 100;
+
+                            var finalState = new StateLog
+                            {
+                                BackupName = SelectedJob.Name,
+                                Timestamp = DateTime.Now,
+                                State = "NON ACTIVE",
+                                Progression = 100
+                            };
+                            StateSettings.UpdateState(finalState);
+                        });
+                    }
+                    catch (Exception ex)
                     {
-                        StatusMessage = $"Erreur : {ex.Message}";
-                        SelectedJob.State = BackupState.Error;
-                        ProgressValue = 0;
-                    });
-                }
-            });
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            StatusMessage = $"Erreur : {ex.Message}";
+                            SelectedJob.State = BackupState.Error;
+                            ProgressValue = 0;
+                        });
+                    }
+                });
+            }
         }
+
 
         public class LanguageProxy
         {

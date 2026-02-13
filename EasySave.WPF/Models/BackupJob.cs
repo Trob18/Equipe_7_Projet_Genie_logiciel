@@ -45,7 +45,6 @@ namespace EasySave.WPF.Models
         {
             State = BackupState.Active;
 
-            // Check for blocked processes defined in settings
             var blockedProcessNames = AppSettings.Instance.BlockedProcesses
                                           .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                                           .Select(p => p.Trim().ToLower())
@@ -58,7 +57,6 @@ namespace EasySave.WPF.Models
                 var processes = Process.GetProcessesByName(processName);
                 if (processes.Length > 0)
                 {
-                    // Dispose of the process objects
                     foreach (var process in processes)
                     {
                         process.Dispose();

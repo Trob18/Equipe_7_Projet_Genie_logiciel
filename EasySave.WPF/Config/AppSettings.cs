@@ -106,9 +106,9 @@ namespace EasySave.WPF.Config
         {
             _language = Language.English;
             _logFormat = "json";
-            _encryptedExtensions = ""; // Default to empty
-            _encryptAll = false; // Default to false
-            _blockedProcesses = "notepad,mspaint"; // Default blocked processes
+            _encryptedExtensions = "";
+            _encryptAll = false;
+            _blockedProcesses = "notepad,mspaint";
             LogDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
             StateDirectory = AppDomain.CurrentDomain.BaseDirectory;
             LoadSettings();
