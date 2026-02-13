@@ -73,6 +73,20 @@ namespace EasySave.WPF.Config
             }
         }
 
+        private string _blockedProcesses;
+        public string BlockedProcesses
+        {
+            get => _blockedProcesses;
+            set
+            {
+                if (_blockedProcesses != value)
+                {
+                    _blockedProcesses = value;
+                    SaveSettings();
+                }
+            }
+        }
+
         public static AppSettings Instance
         {
             get
@@ -94,6 +108,7 @@ namespace EasySave.WPF.Config
             _logFormat = "json";
             _encryptedExtensions = ""; // Default to empty
             _encryptAll = false; // Default to false
+            _blockedProcesses = "notepad,mspaint"; // Default blocked processes
             LogDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
             StateDirectory = AppDomain.CurrentDomain.BaseDirectory;
             LoadSettings();
@@ -116,6 +131,7 @@ namespace EasySave.WPF.Config
                         _logFormat = savedSettings.LogFormat;
                         _encryptedExtensions = savedSettings.EncryptedExtensions;
                         _encryptAll = savedSettings.EncryptAll;
+                        _blockedProcesses = savedSettings.BlockedProcesses ?? "notepad,mspaint";
                     }
                 }
                 catch
@@ -131,7 +147,8 @@ namespace EasySave.WPF.Config
                 Language = _language,
                 LogFormat = _logFormat,
                 EncryptedExtensions = _encryptedExtensions,
-                EncryptAll = _encryptAll
+                EncryptAll = _encryptAll,
+                BlockedProcesses = _blockedProcesses
             };
 
             var options = new JsonSerializerOptions { WriteIndented = true };
@@ -146,5 +163,6 @@ namespace EasySave.WPF.Config
         public string LogFormat { get; set; }
         public string EncryptedExtensions { get; set; }
         public bool EncryptAll { get; set; }
+        public string BlockedProcesses { get; set; }
     }
 }
