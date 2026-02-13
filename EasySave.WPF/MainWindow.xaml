@@ -55,8 +55,15 @@
                         <TextBlock Text="{Binding Labels[Type]}" Grid.Column="3" FontWeight="Bold"/>
 
                         <TextBox Text="{Binding JobName, UpdateSourceTrigger=PropertyChanged}" Grid.Row="1" Grid.Column="0" Margin="0,5,5,0"/>
-                        <TextBox Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}" Grid.Row="1" Grid.Column="1" Margin="0,5,5,0"/>
-                        <TextBox Text="{Binding TargetPath, UpdateSourceTrigger=PropertyChanged}" Grid.Row="1" Grid.Column="2" Margin="0,5,5,0"/>
+                        <Grid Grid.Row="1" Grid.Column="1" Margin="0,5,5,0">
+                            <TextBox Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}" Padding="0,0,25,0"/>
+                            <Button Content="📂" Command="{Binding BrowseSourceCommand}" Width="20" HorizontalAlignment="Right" Margin="2" Background="Transparent" BorderThickness="0" Cursor="Hand"/>
+                        </Grid>
+
+                        <Grid Grid.Row="1" Grid.Column="2" Margin="0,5,5,0">
+                            <TextBox Text="{Binding TargetPath, UpdateSourceTrigger=PropertyChanged}" Padding="0,0,25,0"/>
+                            <Button Content="📂" Command="{Binding BrowseTargetCommand}" Width="20" HorizontalAlignment="Right" Margin="2" Background="Transparent" BorderThickness="0" Cursor="Hand"/>
+                        </Grid>
 
                         <ComboBox ItemsSource="{Binding Source={StaticResource BackupTypeEnum}}" 
                                   SelectedItem="{Binding SelectedType}" 
@@ -119,10 +126,17 @@
 
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <ProgressBar Value="{Binding Progress}" 
-                            Minimum="0" Maximum="100" 
-                            Height="15" 
-                            VerticalAlignment="Center"/>
+                                    <Grid>
+                                        <ProgressBar Value="{Binding Progress}" 
+                                                     Minimum="0" Maximum="100" 
+                                                     Height="15" 
+                                                     VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding ProgressText}" 
+                                                   HorizontalAlignment="Center" 
+                                                   VerticalAlignment="Center" 
+                                                   FontSize="10" 
+                                                   FontWeight="Bold"/>
+                                    </Grid>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
 

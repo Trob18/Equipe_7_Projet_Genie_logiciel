@@ -128,6 +128,8 @@ namespace EasySave.WPF.ViewModels
         public ICommand RemoveExtensionCommand { get; }
         public ICommand AddProcessCommand { get; }
         public ICommand RemoveProcessCommand { get; }
+        public ICommand BrowseSourceCommand { get; }
+        public ICommand BrowseTargetCommand { get; }
 
         public string this[string key] => ResourceSettings.GetString(key);
 
@@ -163,8 +165,28 @@ namespace EasySave.WPF.ViewModels
             RemoveExtensionCommand = new RelayCommand(param => RemoveExtension(param as string), param => param is string);
             AddProcessCommand = new RelayCommand(param => AddProcess());
             RemoveProcessCommand = new RelayCommand(param => RemoveProcess(param as string), param => param is string);
+            BrowseSourceCommand = new RelayCommand(param => BrowseSource());
+            BrowseTargetCommand = new RelayCommand(param => BrowseTarget());
 
             StatusMessage = ResourceSettings.GetString("StatusReady");
+        }
+
+        private void BrowseSource()
+        {
+            var dialog = new Microsoft.Win32.OpenFolderDialog();
+            if (dialog.ShowDialog() == true)
+            {
+                SourcePath = dialog.FolderName;
+            }
+        }
+
+        private void BrowseTarget()
+        {
+            var dialog = new Microsoft.Win32.OpenFolderDialog();
+            if (dialog.ShowDialog() == true)
+            {
+                TargetPath = dialog.FolderName;
+            }
         }
 
         private void UpdateLogger(bool isStartup)
@@ -266,12 +288,6 @@ namespace EasySave.WPF.ViewModels
 
         private void CreateJob()
         {
-            if (BackupJobs.Count >= 5)
-            {
-                MessageBox.Show("Max 5 jobs !", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
             if (string.IsNullOrWhiteSpace(JobName) || string.IsNullOrWhiteSpace(SourcePath) || string.IsNullOrWhiteSpace(TargetPath))
             {
                 StatusMessage = "Champs vides !";
@@ -361,16 +377,16 @@ namespace EasySave.WPF.ViewModels
                 {
                     try
                     {
-                        SelectedJob.Execute();
+                        job.Execute();
 
                         Application.Current.Dispatcher.Invoke(() =>
                         {
-                            StatusMessage = $"{SelectedJob.Name} terminé !";
+                            StatusMessage = $"{job.Name} terminé !";
                             ProgressValue = 100;
 
                             var finalState = new StateLog
                             {
-                                BackupName = SelectedJob.Name,
+                                BackupName = job.Name,
                                 Timestamp = DateTime.Now,
                                 State = "NON ACTIVE",
                                 Progression = 100
@@ -383,9 +399,13 @@ namespace EasySave.WPF.ViewModels
                         Application.Current.Dispatcher.Invoke(() =>
                         {
                             StatusMessage = $"Erreur : {ex.Message}";
-                            SelectedJob.State = BackupState.Error;
-                            ProgressValue = 0;
+                            job.State = BackupState.Error;
                         });
+                    }
+                    finally
+                    {
+                        job.OnProgressUpdate -= progressHandler;
+                        job.OnFileCopied -= fileCopiedHandler;
                     }
                 });
             }
