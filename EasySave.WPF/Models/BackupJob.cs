@@ -1,14 +1,17 @@
-﻿using EasySave.WPF.Enumerations;
+﻿using EasySave.WPF.Config;
+using EasySave.WPF.Enumerations;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using EasySave.WPF.Config;
+using System.Runtime.CompilerServices;
 
 namespace EasySave.WPF.Models
 {
-    public class BackupJob
+    public class BackupJob : INotifyPropertyChanged
     {
         public string Name { get; set; }
         public string SourceDirectory { get; set; }
@@ -19,7 +22,12 @@ namespace EasySave.WPF.Models
         public event EventHandler<BackupProgressEventArgs> OnProgressUpdate;
 
         public event EventHandler<(string source, string target, long size, float time)> OnFileCopied;
-
+        private int _progress;
+        public int Progress
+        {
+            get => _progress;
+            set { _progress = value; OnPropertyChanged(); }
+        }
         public BackupJob(string name, string source, string target, BackupType type)
         {
             Name = name;
@@ -67,7 +75,6 @@ namespace EasySave.WPF.Models
             }
             var allFiles = Directory.GetFiles(SourceDirectory, "*.*", SearchOption.AllDirectories);
 
-            // Get encrypted extensions from settings
             List<string> encryptedExtensions = AppSettings.Instance.EncryptedExtensions
                                                     .Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
                                                     .Select(ext => ext.ToLower().Trim())
@@ -82,7 +89,7 @@ namespace EasySave.WPF.Models
             long currentSizeProcessed = 0;
             
             string cryptoSoftPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "CryptoSoft", "bin", "Debug", "net8.0", "win-x64", "CryptoSoft.exe");
-            string encryptionKey = "EasySaveEncryptionKey"; // Using a fixed key for simplicity
+            string encryptionKey = "EasySaveEncryptionKey";
 
             foreach (var filePath in allFiles)
             {
@@ -137,13 +144,12 @@ namespace EasySave.WPF.Models
                         using (Process process = Process.Start(startInfo))
                         {
                             process.WaitForExit();
-                            if (process.ExitCode >= 0) // CryptoSoft returns elapsed time as exit code
+                            if (process.ExitCode >= 0)
                             {
                                 encryptionTime = process.ExitCode;
                             }
                             else
                             {
-                                // Handle encryption error if necessary
                                 Debug.WriteLine($"CryptoSoft encryption failed for {targetFilePath} with exit code {process.ExitCode}");
                             }
                         }
@@ -165,6 +171,12 @@ namespace EasySave.WPF.Models
             }
 
             State = BackupState.Inactive;
+        }
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

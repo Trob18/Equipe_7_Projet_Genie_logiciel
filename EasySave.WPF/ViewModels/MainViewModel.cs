@@ -5,12 +5,13 @@ using EasySave.WPF.Enumerations;
 using EasySave.WPF.Models;
 using EasySave.WPF.State;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Windows; // Pour Visibility
+using System.Windows;
 using System.Windows.Input;
 using System.Diagnostics; // Added for Debug.WriteLine
 
@@ -27,7 +28,11 @@ namespace EasySave.WPF.ViewModels
             get => _selectedJob;
             set { _selectedJob = value; OnPropertyChanged(); }
         }
+
+        public List<BackupJob> SelectedJobsList { get; set; } = new List<BackupJob>();
+
         public LanguageProxy Labels { get; } = new LanguageProxy();
+
         private string _jobName;
         public string JobName { get => _jobName; set { _jobName = value; OnPropertyChanged(); } }
 
@@ -58,12 +63,11 @@ namespace EasySave.WPF.ViewModels
                 {
                     AppSettings.Instance.EncryptAll = value;
                     OnPropertyChanged();
-                    // Invalidate UI for conditional enabling/disabling of extension input
-                    OnPropertyChanged(nameof(EncryptAll)); 
+                    OnPropertyChanged(nameof(EncryptAll));
                 }
             }
         }
-        
+
         private int _progressValue;
         public int ProgressValue { get => _progressValue; set { _progressValue = value; OnPropertyChanged(); } }
 
@@ -125,6 +129,8 @@ namespace EasySave.WPF.ViewModels
         public ICommand AddProcessCommand { get; }
         public ICommand RemoveProcessCommand { get; }
 
+        public string this[string key] => ResourceSettings.GetString(key);
+
         public MainViewModel()
         {
             _startupLanguage = AppSettings.Instance.Language;
@@ -152,7 +158,7 @@ namespace EasySave.WPF.ViewModels
 
             CreateJobCommand = new RelayCommand(param => CreateJob());
             DeleteJobCommand = new RelayCommand(param => DeleteJob(), param => SelectedJob != null);
-            ExecuteJobCommand = new RelayCommand(param => ExecuteJob(), param => SelectedJob != null);
+            ExecuteJobCommand = new RelayCommand(param => ExecuteJob(), param => SelectedJob != null || SelectedJobsList.Count > 0);
             AddExtensionCommand = new RelayCommand(param => AddExtension());
             RemoveExtensionCommand = new RelayCommand(param => RemoveExtension(param as string), param => param is string);
             AddProcessCommand = new RelayCommand(param => AddProcess());
@@ -209,7 +215,7 @@ namespace EasySave.WPF.ViewModels
                 {
                     EncryptedExtensionsList.Add(newExt);
                     SaveEncryptedExtensions();
-                    NewExtensionInput = ""; // Clear input after adding
+                    NewExtensionInput = "";
                 }
             }
         }
@@ -226,7 +232,6 @@ namespace EasySave.WPF.ViewModels
         private void SaveEncryptedExtensions()
         {
             AppSettings.Instance.EncryptedExtensions = string.Join(", ", EncryptedExtensionsList);
-            // AppSettings.Instance.SaveSettings() is called automatically by the property setter
         }
         
         private void AddProcess()
@@ -294,47 +299,83 @@ namespace EasySave.WPF.ViewModels
 
         private async void ExecuteJob()
         {
-            if (SelectedJob == null) return;
+            var jobsToRun = new List<BackupJob>();
 
-            StatusMessage = $"Exécution : {SelectedJob.Name}...";
+            if (SelectedJobsList.Count > 0)
+            {
+                jobsToRun.AddRange(SelectedJobsList);
+            }
+            else if (SelectedJob != null)
+            {
+                jobsToRun.Add(SelectedJob);
+            }
+
+            if (jobsToRun.Count == 0) return;
+
+            StatusMessage = $"Exécution de {jobsToRun.Count} travaux...";
             ProgressValue = 0;
-
-            SelectedJob.OnProgressUpdate += (sender, args) =>
+            foreach (var job in jobsToRun)
             {
-                Application.Current.Dispatcher.Invoke(() =>
+                EventHandler<BackupProgressEventArgs> progressHandler = (sender, args) =>
                 {
-                    ProgressValue = args.Percentage;
-                    StatusMessage = $"{args.CurrentFileName} ({args.Percentage}%)";
-
-                    var stateLog = new StateLog
+                    Application.Current.Dispatcher.Invoke(() =>
                     {
-                        BackupName = SelectedJob.Name,
-                        Timestamp = DateTime.Now,
-                        State = "ACTIVE",
-                        TotalFilesToCopy = args.TotalFiles,
-                        TotalFilesSize = args.TotalSize,
-                        Progression = args.Percentage,
-                        NbFilesLeftToDo = args.TotalFiles - args.FilesProcessed,
-                        NbFilesSizeLeftToDo = args.TotalSize - args.SizeProcessed,
-                        SourceFilePath = args.CurrentSourcePath,
-                        TargetFilePath = args.CurrentTargetPath
-                    };
-                    StateSettings.UpdateState(stateLog);
-                });
-            };
+                        ProgressValue = args.Percentage;
+                        StatusMessage = $"{job.Name}: {args.Percentage}%";
 
-            SelectedJob.OnFileCopied += (sender, data) =>
-            {
-                var logEntry = new EasySave.Log.Models.LogEntry
-                {
-                    Name = SelectedJob.Name,
-                    SourceFile = data.source,
-                    TargetFile = data.target,
-                    FileSize = data.size,
-                    TransferTime = data.time,
+                        job.Progress = args.Percentage;
+
+                        var stateLog = new StateLog
+                        {
+                            BackupName = job.Name,
+                            Timestamp = DateTime.Now,
+                            State = "ACTIVE",
+                            TotalFilesToCopy = args.TotalFiles,
+                            TotalFilesSize = args.TotalSize,
+                            Progression = args.Percentage,
+                            NbFilesLeftToDo = args.TotalFiles - args.FilesProcessed,
+                            NbFilesSizeLeftToDo = args.TotalSize - args.SizeProcessed,
+                            SourceFilePath = args.CurrentSourcePath,
+                            TargetFilePath = args.CurrentTargetPath
+                        };
+                        StateSettings.UpdateState(stateLog);
+                    });
                 };
-                _logger.WriteLog(logEntry);
-            };
+
+                EventHandler<(string source, string target, long size, float time)> fileCopiedHandler = (sender, data) =>
+                {
+                    var logEntry = new Log.Models.LogEntry
+                    {
+                        Name = job.Name,
+                        SourceFile = data.source,
+                        TargetFile = data.target,
+                        FileSize = data.size,
+                        TransferTime = data.time,
+                    };
+                    _logger.WriteLog(logEntry);
+                };
+
+                job.OnProgressUpdate += progressHandler;
+                job.OnFileCopied += fileCopiedHandler;
+
+                await Task.Run(() =>
+                {
+                    job.Execute();
+                });
+
+                job.OnProgressUpdate -= progressHandler;
+                job.OnFileCopied -= fileCopiedHandler;
+
+                job.Progress = 100;
+
+                var finalState = new StateLog
+                {
+                    BackupName = job.Name,
+                    Timestamp = DateTime.Now,
+                    State = "NON ACTIVE",
+                    Progression = 100
+                };
+                StateSettings.UpdateState(finalState);
 
             await Task.Run(() =>
             {

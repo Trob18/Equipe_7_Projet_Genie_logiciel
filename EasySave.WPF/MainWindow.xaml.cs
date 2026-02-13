@@ -1,5 +1,8 @@
-﻿using EasySave.WPF.ViewModels;
+﻿using EasySave.WPF.Models;
+using EasySave.WPF.ViewModels;
+using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace EasySave.WPF
 {
@@ -9,6 +12,12 @@ namespace EasySave.WPF
         {
             InitializeComponent();
             this.DataContext = new MainViewModel();
+        }
+        private void DataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var viewModel = (MainViewModel)this.DataContext;
+
+            viewModel.SelectedJobsList = JobsDataGrid.SelectedItems.Cast<BackupJob>().ToList();
         }
     }
 }

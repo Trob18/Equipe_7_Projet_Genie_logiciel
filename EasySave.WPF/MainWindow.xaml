@@ -67,12 +67,14 @@
                     </Grid>
                 </GroupBox>
 
-                <DataGrid Grid.Row="1" 
+                <DataGrid x:Name="JobsDataGrid"
+                          Grid.Row="1" 
                           ItemsSource="{Binding BackupJobs}" 
                           SelectedItem="{Binding SelectedJob}"
                           AutoGenerateColumns="False" 
                           IsReadOnly="True" 
-                          SelectionMode="Single"
+                          SelectionMode="Extended"
+                          SelectionChanged="DataGrid_SelectionChanged"
                           BorderBrush="Gray" BorderThickness="1">
 
                     <DataGrid.Columns>
@@ -108,13 +110,23 @@
                             </DataGridTextColumn.HeaderTemplate>
                         </DataGridTextColumn>
 
-                        <DataGridTextColumn Binding="{Binding State}" Width="80">
-                            <DataGridTextColumn.HeaderTemplate>
+                        <DataGridTemplateColumn Width="150">
+                            <DataGridTemplateColumn.HeaderTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding DataContext.Labels[State], RelativeSource={RelativeSource AncestorType=Window}}"/>
                                 </DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
-                        </DataGridTextColumn>
+                            </DataGridTemplateColumn.HeaderTemplate>
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ProgressBar Value="{Binding Progress}" 
+                            Minimum="0" Maximum="100" 
+                            Height="15" 
+                            VerticalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
 
