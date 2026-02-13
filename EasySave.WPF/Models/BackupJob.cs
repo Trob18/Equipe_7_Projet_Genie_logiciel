@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using EasySave.WPF.Config; // Add this using directive
+using EasySave.WPF.Config;
+using System.Threading; // AJOUT
 
 namespace EasySave.WPF.Models
 {
@@ -17,7 +18,6 @@ namespace EasySave.WPF.Models
         public BackupState State { get; set; }
 
         public event EventHandler<BackupProgressEventArgs> OnProgressUpdate;
-
         public event EventHandler<(string source, string target, long size, float time)> OnFileCopied;
 
         public BackupJob(string name, string source, string target, BackupType type)
@@ -29,11 +29,15 @@ namespace EasySave.WPF.Models
             State = BackupState.Inactive;
         }
 
-        public BackupJob()
-        {
-        }
+        public BackupJob() { }
 
         public void Execute()
+        {
+            Execute(CancellationToken.None);
+        }
+
+        // Step 2 : Stop réel via CancellationToken
+        public void Execute(CancellationToken ct)
         {
             State = BackupState.Active;
 
@@ -45,9 +49,9 @@ namespace EasySave.WPF.Models
 
             // Get encrypted extensions from settings
             List<string> encryptedExtensions = AppSettings.Instance.EncryptedExtensions
-                                                    .Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
-                                                    .Select(ext => ext.ToLower().Trim())
-                                                    .ToList();
+                .Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(ext => ext.ToLower().Trim())
+                .ToList();
 
             var allFiles = Directory.GetFiles(SourceDirectory, "*.*", SearchOption.AllDirectories);
             int totalFiles = allFiles.Length;
@@ -57,17 +61,26 @@ namespace EasySave.WPF.Models
             foreach (var f in allFiles) totalSize += new FileInfo(f).Length;
 
             long currentSizeProcessed = 0;
-            
-            string cryptoSoftPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "CryptoSoft", "bin", "Debug", "net8.0", "win-x64", "CryptoSoft.exe");
-            string encryptionKey = "EasySaveEncryptionKey"; // Using a fixed key for simplicity
+
+            string cryptoSoftPath = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "..", "..", "..", "..",
+                "CryptoSoft", "bin", "Debug", "net8.0", "win-x64", "CryptoSoft.exe"
+            );
+
+            string encryptionKey = "EasySaveEncryptionKey";
 
             foreach (var filePath in allFiles)
             {
+                // STOP réel (entre 2 fichiers)
+                ct.ThrowIfCancellationRequested();
+
                 string relativePath = Path.GetRelativePath(SourceDirectory, filePath);
                 string targetFilePath = Path.Combine(TargetDirectory, relativePath);
-                string targetDir = Path.GetDirectoryName(targetFilePath);
+                string? targetDir = Path.GetDirectoryName(targetFilePath);
 
-                if (!Directory.Exists(targetDir)) Directory.CreateDirectory(targetDir);
+                if (!Directory.Exists(targetDir))
+                    Directory.CreateDirectory(targetDir!);
 
                 long currentFileSize = new FileInfo(filePath).Length;
 
@@ -85,11 +98,22 @@ namespace EasySave.WPF.Models
                     long encryptionTime = 0;
 
                     Stopwatch stopwatchCopy = Stopwatch.StartNew();
-                    File.Copy(filePath, targetFilePath, true);
-                    stopwatchCopy.Stop();
-                    copyTime = stopwatchCopy.ElapsedMilliseconds;
+                    try
+                    {
+                        File.Copy(filePath, targetFilePath, true);
+                        stopwatchCopy.Stop();
+                        copyTime = stopwatchCopy.ElapsedMilliseconds;
+                    }
+                    catch
+                    {
+                        stopwatchCopy.Stop();
+                        // copy error => time negative (aligné avec CDC)
+                        OnFileCopied?.Invoke(this, (filePath, targetFilePath, currentFileSize, -stopwatchCopy.ElapsedMilliseconds));
+                        State = BackupState.Error;
+                        continue;
+                    }
 
-                    bool shouldEncrypt = false;
+                    bool shouldEncrypt;
                     if (AppSettings.Instance.EncryptAll)
                     {
                         shouldEncrypt = true;
@@ -102,6 +126,9 @@ namespace EasySave.WPF.Models
 
                     if (shouldEncrypt)
                     {
+                        // si stop demandé, on stop avant de lancer CryptoSoft
+                        ct.ThrowIfCancellationRequested();
+
                         ProcessStartInfo startInfo = new ProcessStartInfo
                         {
                             FileName = cryptoSoftPath,
@@ -114,19 +141,23 @@ namespace EasySave.WPF.Models
                         using (Process process = Process.Start(startInfo))
                         {
                             process.WaitForExit();
-                            if (process.ExitCode >= 0) // CryptoSoft returns elapsed time as exit code
+
+                            if (process.ExitCode >= 0)
                             {
                                 encryptionTime = process.ExitCode;
                             }
                             else
                             {
-                                // Handle encryption error if necessary
+                                // encryption error => negative time
+                                encryptionTime = process.ExitCode; // <0
                                 Debug.WriteLine($"CryptoSoft encryption failed for {targetFilePath} with exit code {process.ExitCode}");
                             }
                         }
                     }
+
                     OnFileCopied?.Invoke(this, (filePath, targetFilePath, currentFileSize, copyTime + encryptionTime));
                 }
+
                 processedCount++;
                 currentSizeProcessed += currentFileSize;
 
