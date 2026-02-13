@@ -119,10 +119,17 @@
 
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <ProgressBar Value="{Binding Progress}" 
-                            Minimum="0" Maximum="100" 
-                            Height="15" 
-                            VerticalAlignment="Center"/>
+                                    <Grid>
+                                        <ProgressBar Value="{Binding Progress}" 
+                                                     Minimum="0" Maximum="100" 
+                                                     Height="15" 
+                                                     VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding ProgressText}" 
+                                                   HorizontalAlignment="Center" 
+                                                   VerticalAlignment="Center" 
+                                                   FontSize="10" 
+                                                   FontWeight="Bold"/>
+                                    </Grid>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
 

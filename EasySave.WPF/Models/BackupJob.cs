@@ -17,7 +17,35 @@ namespace EasySave.WPF.Models
         public string SourceDirectory { get; set; }
         public string TargetDirectory { get; set; }
         public BackupType Type { get; set; }
-        public BackupState State { get; set; }
+
+        private BackupState _state;
+        public BackupState State
+        {
+            get => _state;
+            set { _state = value; OnPropertyChanged(); OnPropertyChanged(nameof(ProgressText)); }
+        }
+
+        private string _remainingTimeText;
+        public string RemainingTimeText
+        {
+            get => _remainingTimeText;
+            set { _remainingTimeText = value; OnPropertyChanged(); OnPropertyChanged(nameof(ProgressText)); }
+        }
+
+        public string ProgressText
+        {
+            get
+            {
+                if (State == BackupState.Error) return "Error";
+                if (Progress == 100 && State == BackupState.Inactive) return "Success";
+                string text = $"{Progress}%";
+                if (State == BackupState.Active && !string.IsNullOrEmpty(RemainingTimeText))
+                {
+                    text += $" ({RemainingTimeText})";
+                }
+                return text;
+            }
+        }
 
         public event EventHandler<BackupProgressEventArgs> OnProgressUpdate;
 
@@ -26,7 +54,7 @@ namespace EasySave.WPF.Models
         public int Progress
         {
             get => _progress;
-            set { _progress = value; OnPropertyChanged(); }
+            set { _progress = value; OnPropertyChanged(); OnPropertyChanged(nameof(ProgressText)); }
         }
         public BackupJob(string name, string source, string target, BackupType type)
         {
@@ -35,15 +63,20 @@ namespace EasySave.WPF.Models
             TargetDirectory = target;
             Type = type;
             State = BackupState.Inactive;
+            RemainingTimeText = "";
         }
 
         public BackupJob()
         {
+            RemainingTimeText = "";
         }
 
         public void Execute()
         {
             State = BackupState.Active;
+            Progress = 0;
+            RemainingTimeText = "";
+            Stopwatch overallStopwatch = Stopwatch.StartNew();
 
             var blockedProcessNames = AppSettings.Instance.BlockedProcesses
                                           .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
@@ -157,6 +190,16 @@ namespace EasySave.WPF.Models
                 processedCount++;
                 currentSizeProcessed += currentFileSize;
 
+                long elapsedMs = overallStopwatch.ElapsedMilliseconds;
+                if (elapsedMs > 500 && currentSizeProcessed > 0)
+                {
+                    double bytesPerMs = (double)currentSizeProcessed / elapsedMs;
+                    long remainingBytes = totalSize - currentSizeProcessed;
+                    double remainingMs = remainingBytes / bytesPerMs;
+                    TimeSpan t = TimeSpan.FromMilliseconds(remainingMs);
+                    RemainingTimeText = t.ToString(@"hh\:mm\:ss");
+                }
+
                 OnProgressUpdate?.Invoke(this, new BackupProgressEventArgs(
                     totalFiles,
                     processedCount,
@@ -168,7 +211,9 @@ namespace EasySave.WPF.Models
                 ));
             }
 
+            overallStopwatch.Stop();
             State = BackupState.Inactive;
+            RemainingTimeText = "";
         }
         public event PropertyChangedEventHandler PropertyChanged;
 
