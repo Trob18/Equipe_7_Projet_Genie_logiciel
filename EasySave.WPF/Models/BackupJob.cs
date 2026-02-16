@@ -49,7 +49,7 @@ namespace EasySave.WPF.Models
 
         public event EventHandler<BackupProgressEventArgs> OnProgressUpdate;
 
-        public event EventHandler<(string source, string target, long size, float time)> OnFileCopied;
+        public event EventHandler<(string source, string target, long size, float time, float encryptionTime)> OnFileCopied;
         private int _progress;
         public int Progress
         {
@@ -185,7 +185,7 @@ namespace EasySave.WPF.Models
                             }
                         }
                     }
-                    OnFileCopied?.Invoke(this, (filePath, targetFilePath, currentFileSize, copyTime + encryptionTime));
+                    OnFileCopied?.Invoke(this, (filePath, targetFilePath, currentFileSize, copyTime, encryptionTime));
                 }
                 processedCount++;
                 currentSizeProcessed += currentFileSize;

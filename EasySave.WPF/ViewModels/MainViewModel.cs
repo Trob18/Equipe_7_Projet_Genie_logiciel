@@ -357,7 +357,7 @@ namespace EasySave.WPF.ViewModels
                     });
                 };
 
-                EventHandler<(string source, string target, long size, float time)> fileCopiedHandler = (sender, data) =>
+                EventHandler<(string source, string target, long size, float time, float encryptionTime)> fileCopiedHandler = (sender, data) =>
                 {
                     var logEntry = new Log.Models.LogEntry
                     {
@@ -366,6 +366,7 @@ namespace EasySave.WPF.ViewModels
                         TargetFile = data.target,
                         FileSize = data.size,
                         TransferTime = data.time,
+                        EncryptionTime = data.encryptionTime,
                     };
                     _logger.WriteLog(logEntry);
                 };
