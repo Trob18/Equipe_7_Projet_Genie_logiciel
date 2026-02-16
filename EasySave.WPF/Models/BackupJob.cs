@@ -153,11 +153,15 @@ namespace EasySave.WPF.Models
             }
 
             long currentSizeProcessed = 0;
+            
+            // Revert to relative project path for CryptoSoft.exe
             string cryptoSoftPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "CryptoSoft", "bin", "Debug", "net8.0", "win-x64", "CryptoSoft.exe");
+            
             if (!File.Exists(cryptoSoftPath))
             {
-                cryptoSoftPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "CryptoSoft", "bin", "Debug", "net8.0", "win-x64", "CryptoSoft.exe"));
+                cryptoSoftPath = Path.GetFullPath(cryptoSoftPath);
             }
+
             string encryptionKey = "EasySaveEncryptionKey";
 
             foreach (var filePath in allFiles)
