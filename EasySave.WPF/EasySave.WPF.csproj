@@ -12,4 +12,8 @@
     <ProjectReference Include="..\EasySave.Log\EasySave.Log.csproj" />
   </ItemGroup>
 
+  <Target Name="BuildCryptoSoft" BeforeTargets="BeforeBuild">
+    <MSBuild Projects="..\CryptoSoft\CryptoSoft.csproj" Targets="Build" />
+  </Target>
+
 </Project>
