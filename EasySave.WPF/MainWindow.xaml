@@ -93,20 +93,30 @@
                             </DataGridTextColumn.HeaderTemplate>
                         </DataGridTextColumn>
 
-                        <DataGridTextColumn Binding="{Binding SourceDirectory}" Width="*">
+                        <DataGridTextColumn Binding="{Binding ShortSourceDirectory}" Width="*">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding DataContext.Labels[SourcePath], RelativeSource={RelativeSource AncestorType=Window}}"/>
                                 </DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="ToolTip" Value="{Binding SourceDirectory}"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
 
-                        <DataGridTextColumn Binding="{Binding TargetDirectory}" Width="*">
+                        <DataGridTextColumn Binding="{Binding ShortTargetDirectory}" Width="*">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding DataContext.Labels[TargetPath], RelativeSource={RelativeSource AncestorType=Window}}"/>
                                 </DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="ToolTip" Value="{Binding TargetDirectory}"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
 
                         <DataGridTextColumn Binding="{Binding Type}" Width="80">

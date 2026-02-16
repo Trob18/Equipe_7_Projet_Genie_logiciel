@@ -14,9 +14,33 @@ namespace EasySave.WPF.Models
     public class BackupJob : INotifyPropertyChanged
     {
         public string Name { get; set; }
-        public string SourceDirectory { get; set; }
-        public string TargetDirectory { get; set; }
+
+        private string _sourceDirectory;
+        public string SourceDirectory 
+        { 
+            get => _sourceDirectory; 
+            set { _sourceDirectory = value; OnPropertyChanged(); OnPropertyChanged(nameof(ShortSourceDirectory)); } 
+        }
+
+        private string _targetDirectory;
+        public string TargetDirectory 
+        { 
+            get => _targetDirectory; 
+            set { _targetDirectory = value; OnPropertyChanged(); OnPropertyChanged(nameof(ShortTargetDirectory)); } 
+        }
+
+        public string ShortSourceDirectory => GetShortPath(SourceDirectory);
+        public string ShortTargetDirectory => GetShortPath(TargetDirectory);
+
         public BackupType Type { get; set; }
+
+        private string GetShortPath(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return "";
+            var parts = path.Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length <= 2) return path;
+            return "...\\" + Path.Combine(parts[parts.Length - 2], parts[parts.Length - 1]);
+        }
 
         private BackupState _state;
         public BackupState State
