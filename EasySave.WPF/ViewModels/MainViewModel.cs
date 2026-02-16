@@ -209,7 +209,12 @@ namespace EasySave.WPF.ViewModels
                     var jobs = JsonSerializer.Deserialize<ObservableCollection<BackupJob>>(json);
                     if (jobs != null)
                     {
-                        foreach (var job in jobs) BackupJobs.Add(job);
+                        foreach (var job in jobs)
+                        {
+                            job.Progress = 0;
+                            job.State = BackupState.Inactive;
+                            BackupJobs.Add(job);
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -290,7 +295,7 @@ namespace EasySave.WPF.ViewModels
         {
             if (string.IsNullOrWhiteSpace(JobName) || string.IsNullOrWhiteSpace(SourcePath) || string.IsNullOrWhiteSpace(TargetPath))
             {
-                StatusMessage = "Champs vides !";
+                StatusMessage = ResourceSettings.GetString("EmptyFields");
                 return;
             }
 
@@ -298,7 +303,7 @@ namespace EasySave.WPF.ViewModels
             BackupJobs.Add(newJob);
             SaveJobs();
 
-            StatusMessage = $"{JobName} créé.";
+            StatusMessage = $"{JobName} {ResourceSettings.GetString("JobCreated")}";
             JobName = ""; SourcePath = ""; TargetPath = "";
         }
 
@@ -308,7 +313,7 @@ namespace EasySave.WPF.ViewModels
             {
                 BackupJobs.Remove(SelectedJob);
                 SaveJobs();
-                StatusMessage = "Travail supprimé.";
+                StatusMessage = ResourceSettings.GetString("JobDeleted");
             }
         }
 
@@ -327,7 +332,7 @@ namespace EasySave.WPF.ViewModels
 
             if (jobsToRun.Count == 0) return;
 
-            StatusMessage = $"Exécution de {jobsToRun.Count} travaux...";
+            StatusMessage = string.Format(ResourceSettings.GetString("ExecutingJobs"), jobsToRun.Count);
             ProgressValue = 0;
             foreach (var job in jobsToRun)
             {
@@ -357,7 +362,7 @@ namespace EasySave.WPF.ViewModels
                     });
                 };
 
-                EventHandler<(string source, string target, long size, float time)> fileCopiedHandler = (sender, data) =>
+                EventHandler<(string source, string target, long size, float time, float encryptionTime)> fileCopiedHandler = (sender, data) =>
                 {
                     var logEntry = new Log.Models.LogEntry
                     {
@@ -366,6 +371,7 @@ namespace EasySave.WPF.ViewModels
                         TargetFile = data.target,
                         FileSize = data.size,
                         TransferTime = data.time,
+                        EncryptionTime = data.encryptionTime,
                     };
                     _logger.WriteLog(logEntry);
                 };
@@ -381,7 +387,7 @@ namespace EasySave.WPF.ViewModels
 
                         Application.Current.Dispatcher.Invoke(() =>
                         {
-                            StatusMessage = $"{job.Name} terminé !";
+                            StatusMessage = $"{job.Name} {ResourceSettings.GetString("JobFinished")}";
                             ProgressValue = 100;
 
                             var finalState = new StateLog
@@ -394,11 +400,26 @@ namespace EasySave.WPF.ViewModels
                             StateSettings.UpdateState(finalState);
                         });
                     }
+                    catch (BlockedProcessException bpex)
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            job.State = BackupState.Paused;
+                            string message = string.Format(ResourceSettings.GetString("ProcessBlockedMessage"), bpex.ProcessName);
+                            StatusMessage = $"{ResourceSettings.GetString("Error")} : {message}";
+                            MessageBox.Show(
+                                message, 
+                                ResourceSettings.GetString("Error"), 
+                                MessageBoxButton.OK, 
+                                MessageBoxImage.Warning
+                            );
+                        });
+                    }
                     catch (Exception ex)
                     {
                         Application.Current.Dispatcher.Invoke(() =>
                         {
-                            StatusMessage = $"Erreur : {ex.Message}";
+                            StatusMessage = $"{ResourceSettings.GetString("Error")} : {ex.Message}";
                             job.State = BackupState.Error;
                         });
                     }
