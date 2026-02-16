@@ -482,3 +482,9 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Keep CryptoSoft binaries
+!CryptoSoft/bin/Debug/net8.0/win-x64/
+!CryptoSoft/bin/Debug/net8.0/win-x64/CryptoSoft.exe
+!CryptoSoft/bin/Debug/net8.0/win-x64/CryptoSoft.dll
+!CryptoSoft/bin/Debug/net8.0/win-x64/CryptoSoft.runtimeconfig.json
