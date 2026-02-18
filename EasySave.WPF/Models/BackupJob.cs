@@ -1,4 +1,7 @@
-﻿using EasySave.WPF.Config;
+﻿// ===============================
+// FILE: EasySave.WPF/Models/BackupJob.cs
+// ===============================
+using EasySave.WPF.Config;
 using EasySave.WPF.Enumerations;
 using System;
 using System.Collections.Generic;
@@ -6,8 +9,8 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using EasySave.WPF.Config;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace EasySave.WPF.Models
 {
@@ -16,17 +19,17 @@ namespace EasySave.WPF.Models
         public string Name { get; set; }
 
         private string _sourceDirectory;
-        public string SourceDirectory 
-        { 
-            get => _sourceDirectory; 
-            set { _sourceDirectory = value; OnPropertyChanged(); OnPropertyChanged(nameof(ShortSourceDirectory)); } 
+        public string SourceDirectory
+        {
+            get => _sourceDirectory;
+            set { _sourceDirectory = value; OnPropertyChanged(); OnPropertyChanged(nameof(ShortSourceDirectory)); }
         }
 
         private string _targetDirectory;
-        public string TargetDirectory 
-        { 
-            get => _targetDirectory; 
-            set { _targetDirectory = value; OnPropertyChanged(); OnPropertyChanged(nameof(ShortTargetDirectory)); } 
+        public string TargetDirectory
+        {
+            get => _targetDirectory;
+            set { _targetDirectory = value; OnPropertyChanged(); OnPropertyChanged(nameof(ShortTargetDirectory)); }
         }
 
         public string ShortSourceDirectory => GetShortPath(SourceDirectory);
@@ -75,12 +78,14 @@ namespace EasySave.WPF.Models
         public event EventHandler<BackupProgressEventArgs> OnProgressUpdate;
 
         public event EventHandler<(string source, string target, long size, float time, float encryptionTime)> OnFileCopied;
+
         private int _progress;
         public int Progress
         {
             get => _progress;
             set { _progress = value; OnPropertyChanged(); OnPropertyChanged(nameof(ProgressText)); }
         }
+
         public BackupJob(string name, string source, string target, BackupType type)
         {
             Name = name;
@@ -96,7 +101,14 @@ namespace EasySave.WPF.Models
             RemainingTimeText = "";
         }
 
+        // Compatibilité: ancien appel reste valide
         public void Execute()
+        {
+            Execute(CancellationToken.None);
+        }
+
+        // Exécution avec Stop réel (CancellationToken)
+        public void Execute(CancellationToken ct)
         {
             State = BackupState.Active;
             Progress = 0;
@@ -105,6 +117,7 @@ namespace EasySave.WPF.Models
 
             var blockedProcessNames = GetBlockedProcessNames();
 
+            // 1er check métier
             CheckBlockedProcesses(blockedProcessNames);
 
             if (!Directory.Exists(SourceDirectory))
@@ -132,9 +145,9 @@ namespace EasySave.WPF.Models
             }
 
             List<string> encryptedExtensions = AppSettings.Instance.EncryptedExtensions
-                                                .Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
-                                                .Select(ext => ext.ToLower().Trim())
-                                                .ToList();
+                .Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(ext => ext.ToLower().Trim())
+                .ToList();
 
             int totalFiles = allFiles.Length;
             int processedCount = 0;
@@ -153,10 +166,14 @@ namespace EasySave.WPF.Models
             }
 
             long currentSizeProcessed = 0;
-            
-            // Revert to relative project path for CryptoSoft.exe
-            string cryptoSoftPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "CryptoSoft", "bin", "Debug", "net8.0", "win-x64", "CryptoSoft.exe");
-            
+
+            // CryptoSoft path (relatif projet)
+            string cryptoSoftPath = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "..", "..", "..", "..",
+                "CryptoSoft", "bin", "Debug", "net8.0", "win-x64", "CryptoSoft.exe"
+            );
+
             if (!File.Exists(cryptoSoftPath))
             {
                 cryptoSoftPath = Path.GetFullPath(cryptoSoftPath);
@@ -166,7 +183,12 @@ namespace EasySave.WPF.Models
 
             foreach (var filePath in allFiles)
             {
+                // STOP entre 2 fichiers
+                ct.ThrowIfCancellationRequested();
+
+                // check métier en boucle (comme ton code)
                 CheckBlockedProcesses(blockedProcessNames);
+
                 try
                 {
                     string relativePath = Path.GetRelativePath(SourceDirectory, filePath);
@@ -208,6 +230,9 @@ namespace EasySave.WPF.Models
 
                         if (shouldEncrypt && File.Exists(cryptoSoftPath))
                         {
+                            // STOP avant CryptoSoft aussi
+                            ct.ThrowIfCancellationRequested();
+
                             try
                             {
                                 ProcessStartInfo startInfo = new ProcessStartInfo
@@ -274,12 +299,13 @@ namespace EasySave.WPF.Models
             State = BackupState.Inactive;
             RemainingTimeText = "";
         }
+
         private List<string> GetBlockedProcessNames()
         {
             return AppSettings.Instance.BlockedProcesses
-                                      .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                                      .Select(p => p.Trim().ToLower())
-                                      .ToList();
+                .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(p => p.Trim().ToLower())
+                .ToList();
         }
 
         private void CheckBlockedProcesses(List<string> blockedProcessNames)

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 
 namespace EasySave.WPF.State
@@ -10,8 +11,13 @@ namespace EasySave.WPF.State
     {
         private static readonly object _writeLock = new object();
 
+        private static string NormalizeName(string name)
+            => (name ?? string.Empty).Trim().ToLowerInvariant();
+
         public static void UpdateState(StateLog stateLog)
         {
+            if (stateLog == null) return;
+
             lock (_writeLock)
             {
                 string stateDir = AppSettings.Instance.StateDirectory;
@@ -23,6 +29,7 @@ namespace EasySave.WPF.State
                 }
 
                 List<StateLog> currentStateList = new List<StateLog>();
+
                 if (File.Exists(stateFile))
                 {
                     try
@@ -35,14 +42,16 @@ namespace EasySave.WPF.State
                         currentStateList = new List<StateLog>();
                     }
                 }
+                string incomingKey = NormalizeName(stateLog.BackupName);
+                stateLog.BackupName = stateLog.BackupName?.Trim(); // garde l'affichage propre
 
-                var existingState = currentStateList.Find(s => s.BackupName == stateLog.BackupName);
-                if (existingState != null)
-                {
-                    currentStateList.Remove(existingState);
-                }
+                currentStateList.RemoveAll(s => NormalizeName(s.BackupName) == incomingKey);
 
                 currentStateList.Add(stateLog);
+
+                currentStateList = currentStateList
+                    .OrderBy(s => NormalizeName(s.BackupName))
+                    .ToList();
 
                 var options = new JsonSerializerOptions { WriteIndented = true };
                 string jsonString = JsonSerializer.Serialize(currentStateList, options);

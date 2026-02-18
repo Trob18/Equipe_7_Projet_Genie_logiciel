@@ -11,13 +11,17 @@ namespace EasySave.WPF
         public MainWindow()
         {
             InitializeComponent();
-            this.DataContext = new MainViewModel();
+            DataContext = new MainViewModel();
         }
+
         private void DataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var viewModel = (MainViewModel)this.DataContext;
+            if (DataContext is not MainViewModel vm) return;
+            if (JobsDataGrid?.SelectedItems == null) return;
 
-            viewModel.SelectedJobsList = JobsDataGrid.SelectedItems.Cast<BackupJob>().ToList();
+            vm.SelectedJobsList = JobsDataGrid.SelectedItems
+                                              .OfType<BackupJob>()
+                                              .ToList();
         }
     }
 }
