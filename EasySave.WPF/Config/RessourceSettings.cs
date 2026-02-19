@@ -41,6 +41,8 @@ namespace EasySave.WPF.Config
             { "ExecutingJobs", "Exécution de {0} travaux..." },
             { "JobFinished", "terminé !" },
             { "Status", "Statut :" },
+            { "LogServerIP", "IP du serveur de Logs :" },
+            { "LogServerIPDesc", "Adresse IP pour les logs distants (ex: 192.168.1.10)" },
             { "ProcessBlockedMessage", "Le processus '{0}' est en cours d'exécution et doit être fermé pour continuer la sauvegarde." },
             { "RestartWarning", "Le changement de langue nécessitera un redémarrage pour être complet." }
         };
@@ -81,6 +83,8 @@ namespace EasySave.WPF.Config
             { "ExecutingJobs", "Executing {0} jobs..." },
             { "JobFinished", "finished !" },
             { "Status", "Status :" },
+            { "LogServerIP", "Log Server IP :" },
+            { "LogServerIPDesc", "IP address for remote logs (e.g., 192.168.1.10)" },
             { "ProcessBlockedMessage", "The process '{0}' is running and must be closed to continue the backup." },
             { "RestartWarning", "Language change requires a restart to be fully applied." }
         };
