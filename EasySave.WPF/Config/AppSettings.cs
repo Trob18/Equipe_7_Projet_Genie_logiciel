@@ -10,11 +10,25 @@ namespace EasySave.WPF.Config
     {
         private static AppSettings _instance;
         private static readonly object _lock = new object();
+        private string _logServerIP;
 
         private readonly string _configFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
 
-
         private Language _language;
+
+        public string LogServerIP
+        {
+            get => _logServerIP;
+            set
+            {
+                if (_logServerIP != value)
+                {
+                    _logServerIP = value;
+                    SaveSettings();
+                }
+            }
+        }
+
         public Language Language
         {
             get => _language;
@@ -58,7 +72,7 @@ namespace EasySave.WPF.Config
                 }
             }
         }
-        
+
         private bool _encryptAll;
         public bool EncryptAll
         {
@@ -104,6 +118,7 @@ namespace EasySave.WPF.Config
 
         private AppSettings()
         {
+            _logServerIP = "127.0.0.1";
             _language = Language.English;
             _logFormat = "json";
             _encryptedExtensions = "";
@@ -113,7 +128,6 @@ namespace EasySave.WPF.Config
             StateDirectory = AppDomain.CurrentDomain.BaseDirectory;
             LoadSettings();
         }
-
 
         private void LoadSettings()
         {
@@ -127,6 +141,7 @@ namespace EasySave.WPF.Config
 
                     if (savedSettings != null)
                     {
+                        _logServerIP = savedSettings.LogServerIP ?? "127.0.0.1";
                         _language = savedSettings.Language;
                         _logFormat = savedSettings.LogFormat;
                         _encryptedExtensions = savedSettings.EncryptedExtensions;
@@ -144,6 +159,7 @@ namespace EasySave.WPF.Config
         {
             var settingsToSave = new AppSettingsDto
             {
+                LogServerIP = _logServerIP,
                 Language = _language,
                 LogFormat = _logFormat,
                 EncryptedExtensions = _encryptedExtensions,
@@ -159,6 +175,7 @@ namespace EasySave.WPF.Config
 
     public class AppSettingsDto
     {
+        public string LogServerIP { get; set; }
         public Language Language { get; set; }
         public string LogFormat { get; set; }
         public string EncryptedExtensions { get; set; }

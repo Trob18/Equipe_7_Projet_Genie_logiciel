@@ -81,7 +81,14 @@ namespace EasySave.WPF.ViewModels
             set { _restartWarningVisibility = value; OnPropertyChanged(); }
         }
 
-        public ObservableCollection<string> LogFormats { get; } = new ObservableCollection<string> { "json", "xml" };
+        public ObservableCollection<string> LogFormats { get; } = new ObservableCollection<string>
+        {
+            "json",
+            "xml",
+            "network",
+            "json+network",
+            "xml+network"
+        };
 
         public string SelectedLogFormat
         {
@@ -191,11 +198,11 @@ namespace EasySave.WPF.ViewModels
 
         private void UpdateLogger(bool isStartup)
         {
-            _logger = LoggerCrea.CreateLogger(AppSettings.Instance.LogFormat, AppSettings.Instance.LogDirectory);
+            _logger = LoggerCrea.CreateLogger(AppSettings.Instance.LogFormat, AppSettings.Instance.LogDirectory, AppSettings.Instance.LogServerIP);
 
             if (!isStartup)
             {
-                StatusMessage = $"Logger : {AppSettings.Instance.LogFormat.ToUpper()} active.";
+                StatusMessage = $"Logger : {AppSettings.Instance.LogFormat.ToUpper()} actif sur {AppSettings.Instance.LogServerIP}.";
             }
         }
 
@@ -246,7 +253,19 @@ namespace EasySave.WPF.ViewModels
                 }
             }
         }
-
+        public string LogServerIP
+        {
+            get => AppSettings.Instance.LogServerIP;
+            set
+            {
+                if (AppSettings.Instance.LogServerIP != value)
+                {
+                    AppSettings.Instance.LogServerIP = value;
+                    OnPropertyChanged();
+                    UpdateLogger(false);
+                }
+            }
+        }
         private void RemoveExtension(string extension)
         {
             if (!string.IsNullOrWhiteSpace(extension))
