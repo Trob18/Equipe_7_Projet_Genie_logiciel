@@ -113,6 +113,57 @@ namespace EasySave.WPF.Models
             RemainingTimeText = "";
         }
 
+        public void InitializeJobData()
+        {
+            if (string.IsNullOrEmpty(SourceDirectory) || !Directory.Exists(SourceDirectory)) return;
+
+            try
+            {
+                string[] allFiles = Directory.GetFiles(SourceDirectory, "*.*", SearchOption.AllDirectories);
+                long total = 0;
+                long processed = 0;
+
+                foreach (var filePath in allFiles)
+                {
+                    FileInfo fi = new FileInfo(filePath);
+                    total += fi.Length;
+
+                    if (!string.IsNullOrEmpty(TargetDirectory))
+                    {
+                        string relativePath = Path.GetRelativePath(SourceDirectory, filePath);
+                        string targetFilePath = Path.Combine(TargetDirectory, relativePath);
+
+                        if (File.Exists(targetFilePath))
+                        {
+                            FileInfo targetFi = new FileInfo(targetFilePath);
+                            // Vérification rapide : taille identique et source pas plus récente que cible
+                            if (fi.Length == targetFi.Length && fi.LastWriteTime <= targetFi.LastWriteTime)
+                            {
+                                processed += fi.Length;
+                            }
+                        }
+                    }
+                }
+
+                TotalSize = total;
+                CurrentSizeProcessed = processed;
+                
+                // Si tout est déjà identique, on met le progrès à 100% visuellement au démarrage
+                if (TotalSize > 0 && CurrentSizeProcessed == TotalSize)
+                {
+                    Progress = 100;
+                }
+                else
+                {
+                    Progress = TotalSize == 0 ? 0 : (int)(CurrentSizeProcessed * 100 / TotalSize);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error initializing job data for {Name}: {ex.Message}");
+            }
+        }
+
         public void Pause() => State = BackupState.Paused;
         public void Resume() => State = BackupState.Active;
         public void Stop()
@@ -163,6 +214,13 @@ namespace EasySave.WPF.Models
 
         public string SizeProgressText => $"{FormatSize(CurrentSizeProcessed)} / {FormatSize(TotalSize)}";
 
+        private string _throughputText;
+        public string ThroughputText
+        {
+            get => _throughputText;
+            set { _throughputText = value; OnPropertyChanged(); }
+        }
+
         private string FormatSize(long bytes)
         {
             string[] units = { "B", "KB", "MB", "GB", "TB" };
@@ -174,6 +232,19 @@ namespace EasySave.WPF.Models
                 i++;
             }
             return $"{doubleBytes:F2} {units[i]}";
+        }
+
+        private string FormatSpeed(double bytesPerSecond)
+        {
+            if (bytesPerSecond <= 0) return "0 B/s";
+            string[] units = { "B/s", "KB/s", "MB/s", "GB/s" };
+            int i = 0;
+            while (bytesPerSecond >= 1024 && i < units.Length - 1)
+            {
+                bytesPerSecond /= 1024;
+                i++;
+            }
+            return $"{bytesPerSecond:F1} {units[i]}";
         }
 
         public void Execute()
@@ -188,6 +259,7 @@ namespace EasySave.WPF.Models
                 CurrentSizeProcessed = 0;
                 TotalSize = 0;
                 RemainingTimeText = "";
+                ThroughputText = "";
             });
 
             Stopwatch overallStopwatch = Stopwatch.StartNew();
@@ -202,6 +274,22 @@ namespace EasySave.WPF.Models
             {
                 RunOnUI(() => State = BackupState.Error);
                 return;
+            }
+
+            // Si sauvegarde complète, on vide la cible avant de commencer
+            if (Type == BackupType.Full && Directory.Exists(TargetDirectory))
+            {
+                try
+                {
+                    DirectoryInfo di = new DirectoryInfo(TargetDirectory);
+                    foreach (FileInfo file in di.GetFiles()) file.Delete();
+                    foreach (DirectoryInfo dir in di.GetDirectories()) dir.Delete(true);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error cleaning target directory: {ex.Message}");
+                    // On peut choisir de continuer ou d'arrêter selon la politique souhaitée
+                }
             }
 
             string[] allFiles;
@@ -389,6 +477,7 @@ namespace EasySave.WPF.Models
             {
                 State = BackupState.Inactive;
                 RemainingTimeText = "";
+                ThroughputText = "";
                 // (Progress restera à 100 via les events, sinon tu peux forcer ici si tu veux)
             });
         }
@@ -397,6 +486,7 @@ namespace EasySave.WPF.Models
         {
             const int bufferSize = 64 * 1024; // 64KB
             byte[] buffer = new byte[bufferSize];
+            long lastSize = CurrentSizeProcessed;
 
             using (FileStream sourceStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read))
             using (FileStream targetStream = new FileStream(targetPath, FileMode.Create, FileAccess.Write))
@@ -413,6 +503,13 @@ namespace EasySave.WPF.Models
                     // Update UI every 200ms
                     if (updateStopwatch.ElapsedMilliseconds > 200)
                     {
+                        double elapsedSeconds = updateStopwatch.ElapsedMilliseconds / 1000.0;
+                        long bytesSinceLastUpdate = CurrentSizeProcessed - lastSize;
+                        double speed = bytesSinceLastUpdate / elapsedSeconds;
+
+                        ThroughputText = FormatSpeed(speed);
+                        lastSize = CurrentSizeProcessed;
+
                         OnProgressUpdate?.Invoke(this, new BackupProgressEventArgs(
                             totalFiles,
                             processedCount,

@@ -307,8 +307,8 @@ namespace EasySave.WPF.ViewModels
                     {
                         foreach (var job in jobs)
                         {
-                            job.Progress = 0;
                             job.State = BackupState.Inactive;
+                            job.InitializeJobData();
                             BackupJobs.Add(job);
                         }
                     }
@@ -420,6 +420,7 @@ namespace EasySave.WPF.ViewModels
             }
 
             var newJob = new BackupJob(JobName, SourcePath, TargetPath, SelectedType);
+            newJob.InitializeJobData();
             BackupJobs.Add(newJob);
             SaveJobs();
 
@@ -430,9 +431,35 @@ namespace EasySave.WPF.ViewModels
 
         private void DeleteJob()
         {
-            if (SelectedJob != null)
+            var jobsToDelete = new List<BackupJob>();
+            if (SelectedJobsList.Count > 0) jobsToDelete.AddRange(SelectedJobsList);
+            else if (SelectedJob != null) jobsToDelete.Add(SelectedJob);
+
+            if (jobsToDelete.Count == 0) return;
+
+            string message;
+            if (jobsToDelete.Count == 1)
             {
-                BackupJobs.Remove(SelectedJob);
+                message = string.Format(ResourceSettings.GetString("ConfirmDeleteSingle"), jobsToDelete[0].Name);
+            }
+            else
+            {
+                message = string.Format(ResourceSettings.GetString("ConfirmDeleteMultiple"), jobsToDelete.Count);
+            }
+
+            var result = MessageBox.Show(
+                message,
+                ResourceSettings.GetString("Delete"),
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning
+            );
+
+            if (result == MessageBoxResult.Yes)
+            {
+                foreach (var job in jobsToDelete)
+                {
+                    BackupJobs.Remove(job);
+                }
                 SaveJobs();
                 StatusMessage = ResourceSettings.GetString("JobDeleted");
             }

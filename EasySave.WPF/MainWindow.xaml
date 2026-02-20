@@ -159,7 +159,8 @@
                 <Grid Margin="25,0">
                     <TextBlock Text="{Binding StatusMessage}" Foreground="#7F8C8D" VerticalAlignment="Center" FontSize="13"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Button Content="{Binding Labels[Create]}" Command="{Binding OpenCreateJobCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,10,0"/>
+                        <Button Content="{Binding Labels[Delete]}" Command="{Binding DeleteJobCommand}" Style="{StaticResource DangerButtonStyle}" Margin="0,0,10,0" Padding="15,5"/>
+                        <Button Content="{Binding Labels[Create]}" Command="{Binding OpenCreateJobCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,0,0"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -272,7 +273,7 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTemplateColumn Width="150">
+                        <DataGridTemplateColumn Width="130">
                             <DataGridTemplateColumn.Header>
                                 <TextBlock Text="{Binding DataContext.Labels[Transfer], RelativeSource={RelativeSource AncestorType=Window}}"/>
                             </DataGridTemplateColumn.Header>
@@ -283,7 +284,18 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTemplateColumn Width="180">
+                        <DataGridTemplateColumn Width="100">
+                            <DataGridTemplateColumn.Header>
+                                <TextBlock Text="{Binding DataContext.Labels[Throughput], RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            </DataGridTemplateColumn.Header>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding ThroughputText}" VerticalAlignment="Center" FontSize="11" Foreground="#2980B9" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="170">
                             <DataGridTemplateColumn.Header>
                                 <TextBlock Text="{Binding DataContext.Labels[Progress], RelativeSource={RelativeSource AncestorType=Window}}"/>
                             </DataGridTemplateColumn.Header>
@@ -317,7 +329,6 @@
                             <Button Content="⏸" Command="{Binding PauseJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="40" Margin="0,0,5,0" ToolTip="Pause"/>
                             <Button Content="▶" Command="{Binding ResumeJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="40" Margin="0,0,5,0" ToolTip="Resume"/>
                             <Button Content="⏹" Command="{Binding StopJobCommand}" Style="{StaticResource DangerButtonStyle}" Width="40" Margin="0,0,10,0" ToolTip="Stop"/>
-                            <Button Content="{Binding Labels[Delete]}" Command="{Binding DeleteJobCommand}" Style="{StaticResource DangerButtonStyle}" Width="120" Margin="0,0,10,0"/>
                             <Button Content="{Binding Labels[Execute]}" Command="{Binding ExecuteJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="180"/>
                         </StackPanel>
                     </Grid>
