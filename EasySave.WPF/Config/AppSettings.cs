@@ -16,6 +16,19 @@ namespace EasySave.WPF.Config
 
         private Language _language;
 
+        private string _priorityExtensions;
+        public string PriorityExtensions
+        {
+            get => _priorityExtensions;
+            set
+            {
+                if (_priorityExtensions != value)
+                {
+                    _priorityExtensions = value;
+                    SaveSettings();
+                }
+            }
+        }
         public string LogServerIP
         {
             get => _logServerIP;
@@ -118,6 +131,7 @@ namespace EasySave.WPF.Config
 
         private AppSettings()
         {
+            _priorityExtensions = "";
             _logServerIP = "127.0.0.1";
             _language = Language.English;
             _logFormat = "json";
@@ -141,6 +155,7 @@ namespace EasySave.WPF.Config
 
                     if (savedSettings != null)
                     {
+                        _priorityExtensions = savedSettings.PriorityExtensions ?? "";
                         _logServerIP = savedSettings.LogServerIP ?? "127.0.0.1";
                         _language = savedSettings.Language;
                         _logFormat = savedSettings.LogFormat;
@@ -159,6 +174,7 @@ namespace EasySave.WPF.Config
         {
             var settingsToSave = new AppSettingsDto
             {
+                PriorityExtensions = _priorityExtensions,
                 LogServerIP = _logServerIP,
                 Language = _language,
                 LogFormat = _logFormat,
@@ -181,5 +197,6 @@ namespace EasySave.WPF.Config
         public string EncryptedExtensions { get; set; }
         public bool EncryptAll { get; set; }
         public string BlockedProcesses { get; set; }
+        public string PriorityExtensions { get; set; }
     }
 }

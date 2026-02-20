@@ -98,7 +98,6 @@ namespace EasySave.WPF.Models
             RemainingTimeText = "";
         }
 
-        // helper : exécuter une action sur le thread UI (si possible)
         private void RunOnUI(Action action)
         {
             try
@@ -112,13 +111,11 @@ namespace EasySave.WPF.Models
                 }
                 else
                 {
-                    // fallback (cas rare)
                     action();
                 }
             }
             catch
             {
-                // ne pas casser l’exécution si le dispatcher est indisponible
                 action();
             }
         }
@@ -136,7 +133,6 @@ namespace EasySave.WPF.Models
 
             var blockedProcessNames = GetBlockedProcessNames();
 
-            // si process métier détecté -> exception (gérée côté ViewModel)
             CheckBlockedProcesses(blockedProcessNames);
 
             if (!Directory.Exists(SourceDirectory))
@@ -168,6 +164,31 @@ namespace EasySave.WPF.Models
                                                 .Select(ext => ext.ToLower().Trim())
                                                 .ToList();
 
+
+
+            List<string> priorityExts = AppSettings.Instance.PriorityExtensions
+                .Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(ext => ext.ToLower().Trim())
+                .Select(ext => ext.StartsWith(".") ? ext : "." + ext)
+                .ToList();
+
+            var priorityFiles = new List<string>();
+            var standardFiles = new List<string>();
+
+            foreach (var file in allFiles)
+            {
+                string extension = Path.GetExtension(file).ToLower();
+                if (priorityExts.Contains(extension))
+                {
+                    priorityFiles.Add(file);
+                }
+                else
+                {
+                    standardFiles.Add(file);
+                }
+            }
+
+            allFiles = priorityFiles.Concat(standardFiles).ToArray();
             int totalFiles = allFiles.Length;
             int processedCount = 0;
 
@@ -186,7 +207,6 @@ namespace EasySave.WPF.Models
 
             long currentSizeProcessed = 0;
 
-            // Revert to relative project path for CryptoSoft.exe
             string cryptoSoftPath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
                 "..", "..", "..", "..",
@@ -202,7 +222,6 @@ namespace EasySave.WPF.Models
 
             foreach (var filePath in allFiles)
             {
-                // si process métier apparaît pendant la sauvegarde
                 CheckBlockedProcesses(blockedProcessNames);
 
                 try
@@ -289,7 +308,6 @@ namespace EasySave.WPF.Models
                         double remainingMs = remainingBytes / bytesPerMs;
                         TimeSpan t = TimeSpan.FromMilliseconds(remainingMs);
 
-                        // thread-safe
                         RunOnUI(() => RemainingTimeText = t.ToString(@"hh\:mm\:ss"));
                     }
 
@@ -316,7 +334,6 @@ namespace EasySave.WPF.Models
             {
                 State = BackupState.Inactive;
                 RemainingTimeText = "";
-                // (Progress restera à 100 via les events, sinon tu peux forcer ici si tu veux)
             });
         }
 

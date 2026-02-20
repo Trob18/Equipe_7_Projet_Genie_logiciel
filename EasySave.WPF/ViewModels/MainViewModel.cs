@@ -50,6 +50,17 @@ namespace EasySave.WPF.ViewModels
         private string _newExtensionInput;
         public string NewExtensionInput { get => _newExtensionInput; set { _newExtensionInput = value; OnPropertyChanged(); } }
 
+        // --- DEBUT : VARIABLES POUR LES EXTENSIONS PRIORITAIRES ---
+        public ObservableCollection<string> PriorityExtensionsList { get; set; }
+
+        private string _newPriorityExtensionInput;
+        public string NewPriorityExtensionInput
+        {
+            get => _newPriorityExtensionInput;
+            set { _newPriorityExtensionInput = value; OnPropertyChanged(); }
+        }
+        // --- FIN ---
+
         public ObservableCollection<string> BlockedProcessesList { get; set; }
         private string _newProcessInput;
         public string NewProcessInput { get => _newProcessInput; set { _newProcessInput = value; OnPropertyChanged(); } }
@@ -122,6 +133,20 @@ namespace EasySave.WPF.ViewModels
             }
         }
 
+        public string LogServerIP
+        {
+            get => AppSettings.Instance.LogServerIP;
+            set
+            {
+                if (AppSettings.Instance.LogServerIP != value)
+                {
+                    AppSettings.Instance.LogServerIP = value;
+                    OnPropertyChanged();
+                    UpdateLogger(false);
+                }
+            }
+        }
+
         private readonly string _jobsFilePath;
         private ILogger _logger;
 
@@ -134,6 +159,11 @@ namespace EasySave.WPF.ViewModels
         public ICommand RemoveProcessCommand { get; }
         public ICommand BrowseSourceCommand { get; }
         public ICommand BrowseTargetCommand { get; }
+
+        // --- COMMANDES POUR LES EXTENSIONS PRIORITAIRES ---
+        public ICommand AddPriorityExtensionCommand { get; }
+        public ICommand RemovePriorityExtensionCommand { get; }
+        // --------------------------------------------------
 
         public string this[string key] => ResourceSettings.GetString(key);
 
@@ -151,26 +181,40 @@ namespace EasySave.WPF.ViewModels
             LoadJobs();
 
             EncryptedExtensionsList = new ObservableCollection<string>(
-                AppSettings.Instance.EncryptedExtensions
+                (AppSettings.Instance.EncryptedExtensions ?? "")
                     .Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(ext => ext.ToLower().Trim())
             );
 
             BlockedProcessesList = new ObservableCollection<string>(
-                AppSettings.Instance.BlockedProcesses
+                (AppSettings.Instance.BlockedProcesses ?? "")
                     .Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(proc => proc.ToLower().Trim())
+            );
+
+            // --- INITIALISATION LISTE EXTENSIONS PRIORITAIRES ---
+            PriorityExtensionsList = new ObservableCollection<string>(
+                (AppSettings.Instance.PriorityExtensions ?? "")
+                    .Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(ext => ext.ToLower().Trim())
             );
 
             CreateJobCommand = new RelayCommand(param => CreateJob());
             DeleteJobCommand = new RelayCommand(param => DeleteJob(), param => SelectedJob != null);
             ExecuteJobCommand = new RelayCommand(param => ExecuteJob(), param => SelectedJob != null || SelectedJobsList.Count > 0);
+
             AddExtensionCommand = new RelayCommand(param => AddExtension());
             RemoveExtensionCommand = new RelayCommand(param => RemoveExtension(param as string), param => param is string);
+
             AddProcessCommand = new RelayCommand(param => AddProcess());
             RemoveProcessCommand = new RelayCommand(param => RemoveProcess(param as string), param => param is string);
+
             BrowseSourceCommand = new RelayCommand(param => BrowseSource());
             BrowseTargetCommand = new RelayCommand(param => BrowseTarget());
+
+            // --- INITIALISATION COMMANDES EXTENSIONS PRIORITAIRES ---
+            AddPriorityExtensionCommand = new RelayCommand(param => AddPriorityExtension());
+            RemovePriorityExtensionCommand = new RelayCommand(param => RemovePriorityExtension(param as string), param => param is string);
 
             StatusMessage = ResourceSettings.GetString("StatusReady");
         }
@@ -250,19 +294,7 @@ namespace EasySave.WPF.ViewModels
                 }
             }
         }
-        public string LogServerIP
-        {
-            get => AppSettings.Instance.LogServerIP;
-            set
-            {
-                if (AppSettings.Instance.LogServerIP != value)
-                {
-                    AppSettings.Instance.LogServerIP = value;
-                    OnPropertyChanged();
-                    UpdateLogger(false);
-                }
-            }
-        }
+
         private void RemoveExtension(string extension)
         {
             if (!string.IsNullOrWhiteSpace(extension))
@@ -276,6 +308,38 @@ namespace EasySave.WPF.ViewModels
         {
             AppSettings.Instance.EncryptedExtensions = string.Join(", ", EncryptedExtensionsList);
         }
+
+        // --- METHODES POUR LES EXTENSIONS PRIORITAIRES ---
+        private void AddPriorityExtension()
+        {
+            if (!string.IsNullOrWhiteSpace(NewPriorityExtensionInput))
+            {
+                string newExt = NewPriorityExtensionInput.ToLower().Trim();
+                if (!newExt.StartsWith(".")) newExt = "." + newExt;
+
+                if (!PriorityExtensionsList.Contains(newExt))
+                {
+                    PriorityExtensionsList.Add(newExt);
+                    SavePriorityExtensions();
+                    NewPriorityExtensionInput = "";
+                }
+            }
+        }
+
+        private void RemovePriorityExtension(string extension)
+        {
+            if (!string.IsNullOrWhiteSpace(extension))
+            {
+                PriorityExtensionsList.Remove(extension);
+                SavePriorityExtensions();
+            }
+        }
+
+        private void SavePriorityExtensions()
+        {
+            AppSettings.Instance.PriorityExtensions = string.Join(", ", PriorityExtensionsList);
+        }
+        // --------------------------------------------------
 
         private void AddProcess()
         {
@@ -333,7 +397,6 @@ namespace EasySave.WPF.ViewModels
             }
         }
 
-        // MULTITHREAD ILLIMITÉ : une Task par job + WhenAll
         private async void ExecuteJob()
         {
             var jobsToRun = new List<BackupJob>();
@@ -352,21 +415,17 @@ namespace EasySave.WPF.ViewModels
             StatusMessage = string.Format(ResourceSettings.GetString("ExecutingJobs"), jobsToRun.Count);
             ProgressValue = 0;
 
-            // On lance tous les jobs en parallèle
             var tasks = new List<Task>();
 
             foreach (var job in jobsToRun)
             {
-                // handlers spécifiques à CE job
                 EventHandler<BackupProgressEventArgs> progressHandler = (sender, args) =>
                 {
                     Application.Current.Dispatcher.Invoke(() =>
                     {
-                        // Global : sera forcément “écrasé” par le dernier événement reçu (normal)
                         ProgressValue = args.Percentage;
                         StatusMessage = $"{job.Name}: {args.Percentage}%";
 
-                        // Par job (DataGrid) : c’est ça qui doit être visible en parallèle
                         job.Progress = args.Percentage;
 
                         var stateLog = new StateLog
@@ -403,7 +462,6 @@ namespace EasySave.WPF.ViewModels
                 job.OnProgressUpdate += progressHandler;
                 job.OnFileCopied += fileCopiedHandler;
 
-                // Task dédiée pour CE job (en parallèle)
                 var task = Task.Run(() =>
                 {
                     try
@@ -412,7 +470,6 @@ namespace EasySave.WPF.ViewModels
 
                         Application.Current.Dispatcher.Invoke(() =>
                         {
-                            // job finit propre
                             job.Progress = 100;
 
                             var finalState = new StateLog
@@ -453,7 +510,6 @@ namespace EasySave.WPF.ViewModels
                     }
                     finally
                     {
-                        // ultra important en parallèle : désabonnement quoi qu’il arrive
                         job.OnProgressUpdate -= progressHandler;
                         job.OnFileCopied -= fileCopiedHandler;
                     }
@@ -462,7 +518,6 @@ namespace EasySave.WPF.ViewModels
                 tasks.Add(task);
             }
 
-            // attendre que tous les jobs soient terminés (toujours en parallèle)
             await Task.WhenAll(tasks);
 
             Application.Current.Dispatcher.Invoke(() =>
@@ -471,7 +526,6 @@ namespace EasySave.WPF.ViewModels
                 ProgressValue = 100;
             });
 
-            // remettre la barre globale à 0 après un court délai
             await Task.Delay(2000);
             Application.Current.Dispatcher.Invoke(() => ProgressValue = 0);
         }
