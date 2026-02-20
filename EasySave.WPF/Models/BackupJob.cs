@@ -6,8 +6,8 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using EasySave.WPF.Config;
 using System.Runtime.CompilerServices;
+using System.Windows; 
 
 namespace EasySave.WPF.Models
 {
@@ -16,17 +16,17 @@ namespace EasySave.WPF.Models
         public string Name { get; set; }
 
         private string _sourceDirectory;
-        public string SourceDirectory 
-        { 
-            get => _sourceDirectory; 
-            set { _sourceDirectory = value; OnPropertyChanged(); OnPropertyChanged(nameof(ShortSourceDirectory)); } 
+        public string SourceDirectory
+        {
+            get => _sourceDirectory;
+            set { _sourceDirectory = value; OnPropertyChanged(); OnPropertyChanged(nameof(ShortSourceDirectory)); }
         }
 
         private string _targetDirectory;
-        public string TargetDirectory 
-        { 
-            get => _targetDirectory; 
-            set { _targetDirectory = value; OnPropertyChanged(); OnPropertyChanged(nameof(ShortTargetDirectory)); } 
+        public string TargetDirectory
+        {
+            get => _targetDirectory;
+            set { _targetDirectory = value; OnPropertyChanged(); OnPropertyChanged(nameof(ShortTargetDirectory)); }
         }
 
         public string ShortSourceDirectory => GetShortPath(SourceDirectory);
@@ -75,12 +75,14 @@ namespace EasySave.WPF.Models
         public event EventHandler<BackupProgressEventArgs> OnProgressUpdate;
 
         public event EventHandler<(string source, string target, long size, float time, float encryptionTime)> OnFileCopied;
+
         private int _progress;
         public int Progress
         {
             get => _progress;
             set { _progress = value; OnPropertyChanged(); OnPropertyChanged(nameof(ProgressText)); }
         }
+
         public BackupJob(string name, string source, string target, BackupType type)
         {
             Name = name;
@@ -96,20 +98,50 @@ namespace EasySave.WPF.Models
             RemainingTimeText = "";
         }
 
+        // helper : exécuter une action sur le thread UI (si possible)
+        private void RunOnUI(Action action)
+        {
+            try
+            {
+                if (Application.Current?.Dispatcher != null)
+                {
+                    if (Application.Current.Dispatcher.CheckAccess())
+                        action();
+                    else
+                        Application.Current.Dispatcher.Invoke(action);
+                }
+                else
+                {
+                    // fallback (cas rare)
+                    action();
+                }
+            }
+            catch
+            {
+                // ne pas casser l’exécution si le dispatcher est indisponible
+                action();
+            }
+        }
+
         public void Execute()
         {
-            State = BackupState.Active;
-            Progress = 0;
-            RemainingTimeText = "";
+            RunOnUI(() =>
+            {
+                State = BackupState.Active;
+                Progress = 0;
+                RemainingTimeText = "";
+            });
+
             Stopwatch overallStopwatch = Stopwatch.StartNew();
 
             var blockedProcessNames = GetBlockedProcessNames();
 
+            // si process métier détecté -> exception (gérée côté ViewModel)
             CheckBlockedProcesses(blockedProcessNames);
 
             if (!Directory.Exists(SourceDirectory))
             {
-                State = BackupState.Error;
+                RunOnUI(() => State = BackupState.Error);
                 return;
             }
 
@@ -121,13 +153,13 @@ namespace EasySave.WPF.Models
             catch (UnauthorizedAccessException ex)
             {
                 Debug.WriteLine($"Access denied to directory: {ex.Message}");
-                State = BackupState.Error;
+                RunOnUI(() => State = BackupState.Error);
                 return;
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error accessing files: {ex.Message}");
-                State = BackupState.Error;
+                RunOnUI(() => State = BackupState.Error);
                 return;
             }
 
@@ -153,10 +185,14 @@ namespace EasySave.WPF.Models
             }
 
             long currentSizeProcessed = 0;
-            
+
             // Revert to relative project path for CryptoSoft.exe
-            string cryptoSoftPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "CryptoSoft", "bin", "Debug", "net8.0", "win-x64", "CryptoSoft.exe");
-            
+            string cryptoSoftPath = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "..", "..", "..", "..",
+                "CryptoSoft", "bin", "Debug", "net8.0", "win-x64", "CryptoSoft.exe"
+            );
+
             if (!File.Exists(cryptoSoftPath))
             {
                 cryptoSoftPath = Path.GetFullPath(cryptoSoftPath);
@@ -166,7 +202,9 @@ namespace EasySave.WPF.Models
 
             foreach (var filePath in allFiles)
             {
+                // si process métier apparaît pendant la sauvegarde
                 CheckBlockedProcesses(blockedProcessNames);
+
                 try
                 {
                     string relativePath = Path.GetRelativePath(SourceDirectory, filePath);
@@ -250,7 +288,9 @@ namespace EasySave.WPF.Models
                         long remainingBytes = totalSize - currentSizeProcessed;
                         double remainingMs = remainingBytes / bytesPerMs;
                         TimeSpan t = TimeSpan.FromMilliseconds(remainingMs);
-                        RemainingTimeText = t.ToString(@"hh\:mm\:ss");
+
+                        // thread-safe
+                        RunOnUI(() => RemainingTimeText = t.ToString(@"hh\:mm\:ss"));
                     }
 
                     OnProgressUpdate?.Invoke(this, new BackupProgressEventArgs(
@@ -271,9 +311,15 @@ namespace EasySave.WPF.Models
             }
 
             overallStopwatch.Stop();
-            State = BackupState.Inactive;
-            RemainingTimeText = "";
+
+            RunOnUI(() =>
+            {
+                State = BackupState.Inactive;
+                RemainingTimeText = "";
+                // (Progress restera à 100 via les events, sinon tu peux forcer ici si tu veux)
+            });
         }
+
         private List<string> GetBlockedProcessNames()
         {
             return AppSettings.Instance.BlockedProcesses

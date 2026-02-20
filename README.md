@@ -1,92 +1,95 @@
-# EasySave – Logiciel de sauvegarde (Projet ProSoft)
+# EasySave â€“ Logiciel de sauvegarde (Projet ProSoft)
 
 ## Contexte du projet
 
-EasySave est un projet de génie logiciel réalisé pour l’entreprise fictive **ProSoft**, éditeur de logiciels.
-L’objectif est de concevoir et développer un **logiciel de sauvegarde professionnel**, robuste, évolutif et maintenable, destiné à des environnements informatiques variés (postes utilisateurs, serveurs, réseaux).
+EasySave est un projet de gÃ©nie logiciel rÃ©alisÃ© pour lâ€™entreprise fictive **ProSoft**, Ã©diteur de logiciels.
+Lâ€™objectif est de concevoir et dÃ©velopper un **logiciel de sauvegarde professionnel**, robuste, Ã©volutif et maintenable, destinÃ© Ã  des environnements informatiques variÃ©s (postes utilisateurs, serveurs, rÃ©seaux).
 
-Le projet s’inscrit dans une logique **industrielle** avec :
-- gestion de versions (majeures / mineures),
-- documentation utilisateur et support,
-- anticipation des évolutions fonctionnelles,
-- réduction des coûts de développement futurs.
-
+Le projet sâ€™inscrit dans une logique **industrielle** avec :
+- Gestion de versions (majeures / mineures).
+- Documentation utilisateur et support.
+- Anticipation des Ã©volutions fonctionnelles.
+- RÃ©duction des coÃ»ts de dÃ©veloppement futurs.
 
 ## Objectif du logiciel EasySave
 
-EasySave permet à un utilisateur de :
-- définir des **travaux de sauvegarde** (jobs),
-- sauvegarder des répertoires (fichiers et sous-répertoires),
-- suivre l’exécution et l’état d’avancement des sauvegardes,
-- produire des **logs exploitables** par le support technique.
+EasySave permet Ã  un utilisateur de :
+- DÃ©finir des **travaux de sauvegarde** (jobs).
+- Sauvegarder des rÃ©pertoires (fichiers et sous-rÃ©pertoires).
+- Suivre lâ€™exÃ©cution et lâ€™Ã©tat dâ€™avancement des sauvegardes.
+- Produire des **logs exploitables** par le support technique (Local ou Distant).
 
-Un **travail de sauvegarde** représente une configuration persistante associant :
-- un nom,
-- un répertoire source,
-- un répertoire cible,
-- un type de sauvegarde (complète ou différentielle).
+Un **travail de sauvegarde** reprÃ©sente une configuration persistante associant :
+- Un nom.
+- Un rÃ©pertoire source.
+- Un rÃ©pertoire cible.
+- Un type de sauvegarde (complÃ¨te ou diffÃ©rentielle).
 
+## DÃ©coupage du projet
 
-## Découpage du projet
+Le dÃ©veloppement est organisÃ© en **trois livrables successifs** :
 
-Le développement est organisé en **trois livrables successifs** :
+### Livrable 1 â€“ EasySave v1.0
+- Application **console .NET**.
+- Jusquâ€™Ã  **5 travaux de sauvegarde**.
+- Sauvegardes complÃ¨tes et diffÃ©rentielles.
+- Logs journaliers au format **JSON**.
+- Fichier dâ€™Ã©tat temps rÃ©el (JSON).
 
-### Livrable 1 – EasySave v1.0
-- Application **console .NET**
-- Jusqu’à **5 travaux de sauvegarde**
-- Sauvegardes complètes et différentielles
-- Exécution via menu console ou ligne de commande
-- Logs journaliers au format **JSON**
-- Fichier d’état temps réel (JSON)
-- Librairie dédiée de logging : **EasyLog.dll**
+### Livrable 2 â€“ EasySave v1.1 et v2.0
+- Choix du format de logs (JSON / XML).
+- Interface graphique **WPF (MVVM)**.
+- Nombre de travaux illimitÃ©.
+- Chiffrement de fichiers via **CryptoSoft**.
+- DÃ©tection et gestion dâ€™un logiciel mÃ©tier (Business Software).
 
-### Livrable 2 – EasySave v1.1 et v2.0
-- Choix du format de logs (JSON / XML)
-- Interface graphique (WPF ou Avalonia)
-- Nombre de travaux illimité
-- Chiffrement de fichiers via CryptoSoft
-- Détection et gestion d’un logiciel métier
+### Livrable 3 â€“ EasySave v3.0 (Version Actuelle)
+- **Architecture Log Distante** via Docker (Serveur TCP).
+- Sauvegardes en **parallÃ¨le** (Multithreading).
+- Gestion des prioritÃ©s de fichiers.
+- ContrÃ´le des travaux temps rÃ©el (Play / Pause / Stop).
+- Pause automatique globale en cas de lancement d'un logiciel mÃ©tier.
 
-### Livrable 3 – EasySave v3.0
-- Sauvegardes en parallèle
-- Gestion des priorités de fichiers
-- Contrôle des travaux (Play / Pause / Stop)
-- Pause automatique en cas de logiciel métier
-- Centralisation des logs via un service Docker
+## Installation et DÃ©marrage (Serveur de Logs Docker)
 
+La version 3.0 intÃ¨gre un module de logs distants. Pour l'utiliser, le serveur de rÃ©ception doit Ãªtre lancÃ© via Docker.
 
-## Technologies utilisées
+**PrÃ©requis :**
+- Docker Desktop installÃ© et lancÃ©.
 
-- Langage : **C#**
-- Framework : **.NET 8**
-- IDE : **Visual Studio 2022+**
-- Gestion de version : **Git / GitHub**
-- Modélisation : **UML**
+**ProcÃ©dure de lancement :**
+1. Ouvrez un terminal Ã  la racine du projet (lÃ  oÃ¹ se trouve le fichier `docker-compose.yml`).
+2. ExÃ©cutez la commande suivante :
+   ```bash
+   docker-compose up -d --build
+   ```
+3. Le serveur Ã©coute sur le port 9000.
+4. Les logs reÃ§us sont stockÃ©s automatiquement dans le dossier ./logs Ã  la racine du projet.   
+Pour arrÃªter le serveur :
+   ```bash
+   docker-compose down
+   ```
+## Technologies utilisÃ©es
+* Langage : C#
+* Framework : .NET 8
+* Interface : WPF (Pattern MVVM)
+* Infrastructure : Docker (pour les logs distants)
+* IDE : Visual Studio 2022+
+* Gestion de version : Git / GitHub
 
+## Organisation du dÃ©pÃ´t
+* /EasySave.WPF : Application principale (Interface graphique).
+* /EasySave.Log : Librairie de logging (DLL / Interface ILogger).
+* /EasySave.LogServer : Serveur de logs TCP (Application Console pour Docker).
+* /CryptoSoft : Module de chiffrement externe (XOR).
+* docker-compose.yml : Configuration pour le dÃ©ploiement du serveur de logs.
+* /README.md : Documentation du projet.
 
-## Qualité et contraintes
-
-Le projet respecte les contraintes suivantes :
-- Code en anglais
-- Lisibilité et maintenabilité
-- Architecture en couches
-- Fonctions courtes et cohérentes
-
-
-## Organisation du dépôt
-
-- `/EasySave.App` : code source de l’application EasySave
-- `/EasySave.Log` : librairie de logging (DLL)
-- `/README.md` : description du projet
-
-## Équipe projet
-
-Projet réalisé par une équipe de 3 personnes :
-- Chef de projet / coordination technique
-- Développeur A : logique métier et moteur de sauvegarde
-- Développeur B : logs, état temps réel, interface console
-
+## Ã‰quipe projet
+Projet rÃ©alisÃ© par une Ã©quipe de 3 personnes :
+* Chef de projet / coordination technique.
+* DÃ©veloppeur A : Logique mÃ©tier et moteur de sauvegarde parallÃ¨le.
+* DÃ©veloppeur B : Logs distants, Ã©tat temps rÃ©el, interface utilisateur.
 
 ## Licence
-
-Projet réalisé dans un cadre pédagogique.
+* Projet rÃ©alisÃ© dans un cadre pÃ©dagogique.
