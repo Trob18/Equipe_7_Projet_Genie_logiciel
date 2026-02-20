@@ -68,6 +68,20 @@ namespace EasySave.WPF.ViewModels
             }
         }
 
+        private bool _isCreateJobVisible;
+        public bool IsCreateJobVisible
+        {
+            get => _isCreateJobVisible;
+            set { _isCreateJobVisible = value; OnPropertyChanged(); }
+        }
+
+        private int _selectedTab;
+        public int SelectedTab
+        {
+            get => _selectedTab;
+            set { _selectedTab = value; OnPropertyChanged(); }
+        }
+
         private int _progressValue;
         public int ProgressValue { get => _progressValue; set { _progressValue = value; OnPropertyChanged(); } }
 
@@ -134,6 +148,8 @@ namespace EasySave.WPF.ViewModels
         public ICommand RemoveProcessCommand { get; }
         public ICommand BrowseSourceCommand { get; }
         public ICommand BrowseTargetCommand { get; }
+        public ICommand OpenCreateJobCommand { get; }
+        public ICommand CloseCreateJobCommand { get; }
 
         public string this[string key] => ResourceSettings.GetString(key);
 
@@ -142,6 +158,7 @@ namespace EasySave.WPF.ViewModels
             _startupLanguage = AppSettings.Instance.Language;
             RestartWarningVisibility = Visibility.Collapsed;
             SelectedType = BackupType.Full;
+            IsCreateJobVisible = false;
 
             _jobsFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "jobs.json");
 
@@ -171,6 +188,8 @@ namespace EasySave.WPF.ViewModels
             RemoveProcessCommand = new RelayCommand(param => RemoveProcess(param as string), param => param is string);
             BrowseSourceCommand = new RelayCommand(param => BrowseSource());
             BrowseTargetCommand = new RelayCommand(param => BrowseTarget());
+            OpenCreateJobCommand = new RelayCommand(param => IsCreateJobVisible = true);
+            CloseCreateJobCommand = new RelayCommand(param => IsCreateJobVisible = false);
 
             StatusMessage = ResourceSettings.GetString("StatusReady");
         }
@@ -239,15 +258,19 @@ namespace EasySave.WPF.ViewModels
         {
             if (!string.IsNullOrWhiteSpace(NewExtensionInput))
             {
-                string newExt = NewExtensionInput.ToLower().Trim();
-                if (!newExt.StartsWith(".")) newExt = "." + newExt;
-
-                if (!EncryptedExtensionsList.Contains(newExt))
+                var extensions = NewExtensionInput.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var ext in extensions)
                 {
-                    EncryptedExtensionsList.Add(newExt);
-                    SaveEncryptedExtensions();
-                    NewExtensionInput = "";
+                    string cleanExt = ext.ToLower().Trim();
+                    if (!cleanExt.StartsWith(".")) cleanExt = "." + cleanExt;
+
+                    if (!EncryptedExtensionsList.Contains(cleanExt))
+                    {
+                        EncryptedExtensionsList.Add(cleanExt);
+                    }
                 }
+                SaveEncryptedExtensions();
+                NewExtensionInput = "";
             }
         }
         public string LogServerIP
@@ -281,15 +304,19 @@ namespace EasySave.WPF.ViewModels
         {
             if (!string.IsNullOrWhiteSpace(NewProcessInput))
             {
-                string newProc = NewProcessInput.ToLower().Trim();
-                if (newProc.EndsWith(".exe")) newProc = newProc[..^4];
-
-                if (!BlockedProcessesList.Contains(newProc))
+                var processes = NewProcessInput.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var proc in processes)
                 {
-                    BlockedProcessesList.Add(newProc);
-                    SaveBlockedProcesses();
-                    NewProcessInput = "";
+                    string cleanProc = proc.ToLower().Trim();
+                    if (cleanProc.EndsWith(".exe")) cleanProc = cleanProc[..^4];
+
+                    if (!BlockedProcessesList.Contains(cleanProc))
+                    {
+                        BlockedProcessesList.Add(cleanProc);
+                    }
                 }
+                SaveBlockedProcesses();
+                NewProcessInput = "";
             }
         }
 
@@ -321,6 +348,7 @@ namespace EasySave.WPF.ViewModels
 
             StatusMessage = $"{JobName} {ResourceSettings.GetString("JobCreated")}";
             JobName = ""; SourcePath = ""; TargetPath = "";
+            IsCreateJobVisible = false;
         }
 
         private void DeleteJob()

@@ -1,4 +1,4 @@
-﻿<Window x:Class="EasySave.WPF.MainWindow"
+<Window x:Class="EasySave.WPF.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -7,10 +7,12 @@
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:enums="clr-namespace:EasySave.WPF.Enumerations"
         mc:Ignorable="d"
-        Title="EasySave v3.0" Height="650" Width="950"
-        WindowStartupLocation="CenterScreen">
+        Title="EasySave v3.0" Height="700" Width="1000"
+        WindowStartupLocation="CenterScreen"
+        Background="#F4F7F9">
 
     <Window.Resources>
+        <!-- Enumerations -->
         <ObjectDataProvider x:Key="BackupTypeEnum" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
                 <x:Type TypeName="enums:BackupType"/>
@@ -22,153 +24,271 @@
                 <x:Type TypeName="enums:Language"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
+
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Styles -->
+        <Style x:Key="SidebarButtonStyle" TargetType="RadioButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
+            <Setter Property="Height" Value="50"/>
+            <Setter Property="Margin" Value="0,2"/>
+            <Setter Property="Padding" Value="20,0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#BDC3C7"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#34495E"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="Background" Value="#2980B9"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#2980B9"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#3498DB"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#1F618D"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" Value="#BDC3C7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
+            <Setter Property="Background" Value="#E74C3C"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#C0392B"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="TagStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#D5DBDB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="Margin" Value="0,0,8,8"/>
+        </Style>
     </Window.Resources>
 
-    <TabControl Margin="5">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <TabItem Header="{Binding Labels[TabHome]}">
-            <Grid Margin="10">
+        <!-- Sidebar -->
+        <Grid Grid.Column="0" Background="#2C3E50">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- App Logo/Title -->
+            <StackPanel Grid.Row="0" Margin="25,40,25,40" Orientation="Horizontal">
+                <TextBlock Text="🛡️" FontSize="28" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Text="EasySave" Foreground="White" FontSize="22" FontWeight="Bold" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Navigation -->
+            <StackPanel Grid.Row="1">
+                <RadioButton Content="📂  Backups" Style="{StaticResource SidebarButtonStyle}" 
+                             IsChecked="True" x:Name="BackupsNavBtn"/>
+                <RadioButton Content="⚙️  Settings" Style="{StaticResource SidebarButtonStyle}"
+                             x:Name="SettingsNavBtn"/>
+            </StackPanel>
+
+            <!-- App Info/Version -->
+            <TextBlock Grid.Row="2" Text="v3.0.0" Foreground="#7F8C8D" Margin="25" FontSize="10"/>
+        </Grid>
+
+        <!-- Main Content -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="70"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Border Grid.Row="0" Background="White" BorderBrush="#ECF0F1" BorderThickness="0,0,0,1">
+                <Grid Margin="25,0">
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="#7F8C8D" VerticalAlignment="Center" FontSize="13"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Button Content="+ Create Job" Command="{Binding OpenCreateJobCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,10,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Backups View -->
+            <Grid Grid.Row="1" Margin="25">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsChecked, ElementName=BackupsNavBtn}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <GroupBox Header="{Binding Labels[JobName]}" Grid.Row="0" Margin="0,0,0,10" Padding="10">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-
-                        <TextBlock Text="{Binding Labels[JobName]}" Grid.Column="0" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding Labels[SourcePath]}" Grid.Column="1" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding Labels[TargetPath]}" Grid.Column="2" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding Labels[Type]}" Grid.Column="3" FontWeight="Bold"/>
-
-                        <TextBox Text="{Binding JobName, UpdateSourceTrigger=PropertyChanged}" Grid.Row="1" Grid.Column="0" Margin="0,5,5,0"/>
-                        <Grid Grid.Row="1" Grid.Column="1" Margin="0,5,5,0">
-                            <TextBox Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}" Padding="0,0,25,0"/>
-                            <Button Content="📂" Command="{Binding BrowseSourceCommand}" Width="20" HorizontalAlignment="Right" Margin="2" Background="Transparent" BorderThickness="0" Cursor="Hand"/>
-                        </Grid>
-
-                        <Grid Grid.Row="1" Grid.Column="2" Margin="0,5,5,0">
-                            <TextBox Text="{Binding TargetPath, UpdateSourceTrigger=PropertyChanged}" Padding="0,0,25,0"/>
-                            <Button Content="📂" Command="{Binding BrowseTargetCommand}" Width="20" HorizontalAlignment="Right" Margin="2" Background="Transparent" BorderThickness="0" Cursor="Hand"/>
-                        </Grid>
-
-                        <ComboBox ItemsSource="{Binding Source={StaticResource BackupTypeEnum}}" 
-                                  SelectedItem="{Binding SelectedType}" 
-                                  Grid.Row="1" Grid.Column="3" Width="100" Margin="0,5,5,0" VerticalContentAlignment="Center"/>
-
-                        <Button Content="{Binding Labels[Create]}" Command="{Binding CreateJobCommand}" 
-                                Grid.Row="1" Grid.Column="4" Width="80" Margin="0,5,0,0"/>
-                    </Grid>
-                </GroupBox>
-
                 <DataGrid x:Name="JobsDataGrid"
-                          Grid.Row="1" 
                           ItemsSource="{Binding BackupJobs}" 
                           SelectedItem="{Binding SelectedJob}"
                           AutoGenerateColumns="False" 
                           IsReadOnly="True" 
                           SelectionMode="Extended"
                           SelectionChanged="DataGrid_SelectionChanged"
-                          BorderBrush="Gray" BorderThickness="1">
+                          BorderThickness="0" Background="Transparent"
+                          GridLinesVisibility="None"
+                          HeadersVisibility="Column"
+                          RowHeight="60">
+                    <DataGrid.Resources>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="#95A5A6"/>
+                            <Setter Property="Padding" Value="10,0"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                            <Setter Property="BorderBrush" Value="#ECF0F1"/>
+                            <Setter Property="Height" Value="40"/>
+                        </Style>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Background" Value="White"/>
+                            <Setter Property="Margin" Value="0,0,0,5"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#F2F8FD"/>
+                                    <Setter Property="BorderBrush" Value="#2980B9"/>
+                                    <Setter Property="BorderThickness" Value="1,0,0,0"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="DataGridCell">
+                                        <Border Background="{TemplateBinding Background}" Padding="10,0">
+                                            <ContentPresenter VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </DataGrid.Resources>
 
                     <DataGrid.Columns>
-                        <DataGridTextColumn Binding="{Binding Name}" Width="150">
-                            <DataGridTextColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding DataContext.Labels[JobName], RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                </DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
-                        </DataGridTextColumn>
-
-                        <DataGridTextColumn Binding="{Binding ShortSourceDirectory}" Width="*">
-                            <DataGridTextColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding DataContext.Labels[SourcePath], RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                </DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
-                            <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="ToolTip" Value="{Binding SourceDirectory}"/>
-                                </Style>
-                            </DataGridTextColumn.ElementStyle>
-                        </DataGridTextColumn>
-
-                        <DataGridTextColumn Binding="{Binding ShortTargetDirectory}" Width="*">
-                            <DataGridTextColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding DataContext.Labels[TargetPath], RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                </DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
-                            <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="ToolTip" Value="{Binding TargetDirectory}"/>
-                                </Style>
-                            </DataGridTextColumn.ElementStyle>
-                        </DataGridTextColumn>
-
-                        <DataGridTextColumn Binding="{Binding Type}" Width="80">
-                            <DataGridTextColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding DataContext.Labels[Type], RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                </DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
-                        </DataGridTextColumn>
-
-                        <DataGridTemplateColumn Width="150">
-                            <DataGridTemplateColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding DataContext.Labels[State], RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.HeaderTemplate>
-
+                        <DataGridTextColumn Binding="{Binding Name}" Header="Job Name" Width="180" FontWeight="SemiBold" Foreground="#2C3E50"/>
+                        
+                        <DataGridTemplateColumn Header="Directories" Width="*">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Grid>
-                                        <ProgressBar Value="{Binding Progress}" 
-                                                     Minimum="0" Maximum="100" 
-                                                     Height="15" 
-                                                     VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding ProgressText}" 
-                                                   HorizontalAlignment="Center" 
-                                                   VerticalAlignment="Center" 
-                                                   FontSize="10" 
-                                                   FontWeight="Bold"/>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding SourceDirectory}" FontSize="11" Foreground="#34495E" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding TargetDirectory}" FontSize="10" Foreground="#95A5A6" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Binding="{Binding Type}" Header="Type" Width="80"/>
+
+                        <DataGridTemplateColumn Header="Progress" Width="200">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Grid VerticalAlignment="Center">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Text="{Binding ProgressText}" FontSize="10" Foreground="#7F8C8D" Margin="0,0,0,4"/>
+                                        <ProgressBar Value="{Binding Progress}" Grid.Row="1" Height="6" Background="#ECF0F1" BorderThickness="0">
+                                            <ProgressBar.Foreground>
+                                                <SolidColorBrush Color="#2980B9"/>
+                                            </ProgressBar.Foreground>
+                                        </ProgressBar>
                                     </Grid>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
-
                         </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
 
-                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,10,0,10">
-                    <Button Content="{Binding Labels[Delete]}" Command="{Binding DeleteJobCommand}" 
-                            Width="100" Height="30" Margin="0,0,10,0" Background="#FFCCCC"/>
-
-                    <Button Content="{Binding Labels[Execute]}" Command="{Binding ExecuteJobCommand}" 
-                            Width="100" Height="30" Background="#CCFFCC" FontWeight="Bold"/>
-                </StackPanel>
+                <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="20" Margin="0,20,0,0">
+                    <Grid>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Selected Jobs: " VerticalAlignment="Center" Foreground="#7F8C8D"/>
+                            <TextBlock Text="{Binding SelectedJobsList.Count}" FontWeight="Bold" VerticalAlignment="Center" Foreground="#2C3E50" Margin="5,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="Delete" Command="{Binding DeleteJobCommand}" Style="{StaticResource DangerButtonStyle}" Width="100" Margin="0,0,10,0"/>
+                            <Button Content="Run Backup" Command="{Binding ExecuteJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="150"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
             </Grid>
-        </TabItem>
 
-        <TabItem Header="{Binding Labels[TabSettings]}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="20" MaxWidth="800" HorizontalAlignment="Left">
-                    <TextBlock Text="{Binding Labels[TitleSettings]}" FontSize="24" FontWeight="Bold" Margin="0,0,0,20" Foreground="#2D3E50"/>
+            <!-- Settings View -->
+            <ScrollViewer Grid.Row="1" Margin="25" VerticalScrollBarVisibility="Auto">
+                <ScrollViewer.Style>
+                    <Style TargetType="ScrollViewer">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsChecked, ElementName=SettingsNavBtn}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ScrollViewer.Style>
 
-                    <GroupBox Header="{Binding Labels[General]}" Margin="0,0,0,20" Padding="15" BorderBrush="#DDD" BorderThickness="1">
+                <StackPanel MaxWidth="800" HorizontalAlignment="Left">
+                    <!-- General Settings -->
+                    <TextBlock Text="General Settings" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,20"/>
+                    
+                    <Border Background="White" CornerRadius="8" Padding="25" Margin="0,0,0,25">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="200"/>
@@ -176,74 +296,53 @@
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="40"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="40"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <StackPanel Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,15">
-                                <TextBlock Text="{Binding Labels[LogFormat]}" FontSize="14" FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding Labels[LogFormatDesc]}" FontSize="11" Foreground="Gray"/>
+                            <StackPanel Grid.Row="0">
+                                <TextBlock Text="Log Format" FontWeight="SemiBold" Foreground="#34495E"/>
+                                <TextBlock Text="Select how logs are saved" FontSize="11" Foreground="#95A5A6"/>
                             </StackPanel>
-                            <ComboBox Grid.Row="0" Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,0,15"
-                                      ItemsSource="{Binding LogFormats}"
-                                      SelectedItem="{Binding SelectedLogFormat}"/>
+                            <ComboBox Grid.Row="0" Grid.Column="1" Width="200" HorizontalAlignment="Left"
+                                      ItemsSource="{Binding LogFormats}" SelectedItem="{Binding SelectedLogFormat}"/>
 
-                            <StackPanel Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,15">
-                                <TextBlock Text="{Binding Labels[LangInterface]}" FontSize="14" FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding Labels[LangInterfaceDesc]}" FontSize="11" Foreground="Gray"/>
+                            <StackPanel Grid.Row="2">
+                                <TextBlock Text="Interface Language" FontWeight="SemiBold" Foreground="#34495E"/>
+                                <TextBlock Text="Requires application restart" FontSize="11" Foreground="#95A5A6"/>
                             </StackPanel>
-                            <ComboBox Grid.Row="1" Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,0,15"
-                                      ItemsSource="{Binding Source={StaticResource LanguageEnum}}"
-                                      SelectedItem="{Binding SelectedLanguage}"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1" Width="200" HorizontalAlignment="Left"
+                                      ItemsSource="{Binding Source={StaticResource LanguageEnum}}" SelectedItem="{Binding SelectedLanguage}"/>
 
-                            <StackPanel Grid.Row="2" Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Labels[LogServerIP]}" FontSize="14" FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding Labels[LogServerIPDesc]}" FontSize="11" Foreground="Gray"/>
+                            <StackPanel Grid.Row="4">
+                                <TextBlock Text="Log Server IP" FontWeight="SemiBold" Foreground="#34495E"/>
+                                <TextBlock Text="For network logging" FontSize="11" Foreground="#95A5A6"/>
                             </StackPanel>
-                            <TextBox Grid.Row="2" Grid.Column="1" Width="200" HorizontalAlignment="Left" VerticalAlignment="Center" Padding="5"
-                                     Text="{Binding LogServerIP, UpdateSourceTrigger=PropertyChanged}" 
-                                     ToolTip="{Binding Labels[LogServerIPDesc]}"/>
+                            <TextBox Grid.Row="4" Grid.Column="1" Width="200" HorizontalAlignment="Left" Padding="5"
+                                     Text="{Binding LogServerIP, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
-                    </GroupBox>
+                    </Border>
 
-                    <GroupBox Header="{Binding Labels[Encryption]}" Margin="0,0,0,20" Padding="15" BorderBrush="#DDD" BorderThickness="1">
+                    <!-- Encryption Tags -->
+                    <TextBlock Text="Encryption &amp; Business" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,20"/>
+                    
+                    <Border Background="White" CornerRadius="8" Padding="25" Margin="0,0,0,25">
                         <StackPanel>
+                            <TextBlock Text="Encrypted Extensions" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,10"/>
+                            <TextBlock Text="Add extensions (separated by space, comma or semicolon)" FontSize="11" Foreground="#95A5A6" Margin="0,0,0,15"/>
+                            
                             <Grid Margin="0,0,0,15">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="200"/>
                                     <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Labels[EncryptAll]}" FontSize="14" FontWeight="SemiBold"/>
-                                    <TextBlock Text="{Binding Labels[EncryptAllDesc]}" FontSize="11" Foreground="Gray"/>
-                                </StackPanel>
-                                <CheckBox Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center"
-                                          IsChecked="{Binding EncryptAll}">
-                                    <CheckBox.LayoutTransform>
-                                        <ScaleTransform ScaleX="1.2" ScaleY="1.2"/>
-                                    </CheckBox.LayoutTransform>
-                                </CheckBox>
+                                <TextBox Text="{Binding NewExtensionInput, UpdateSourceTrigger=PropertyChanged}" 
+                                         Padding="10,8" VerticalContentAlignment="Center" BorderBrush="#D5DBDB"/>
+                                <Button Grid.Column="1" Content="Add" Command="{Binding AddExtensionCommand}" 
+                                        Style="{StaticResource ActionButtonStyle}" Margin="10,0,0,0" Width="80"/>
                             </Grid>
-
-                            <Separator Margin="0,5,0,15"/>
-
-                            <TextBlock Text="{Binding Labels[EncryptExtensions]}" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <StackPanel.Style>
-                                    <Style TargetType="StackPanel">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding EncryptAll}" Value="True">
-                                                <Setter Property="IsEnabled" Value="False"/>
-                                                <Setter Property="Opacity" Value="0.5"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </StackPanel.Style>
-                                <TextBox x:Name="NewExtensionInputTextBox" Width="180" Height="28" VerticalContentAlignment="Center" 
-                                         Text="{Binding NewExtensionInput, UpdateSourceTrigger=PropertyChanged}"/>
-                                <Button Content="+" Command="{Binding AddExtensionCommand}" Width="30" Margin="5,0,0,0" 
-                                        Background="#E7F3FF" BorderBrush="#0078D7" FontWeight="Bold"/>
-                            </StackPanel>
 
                             <ItemsControl ItemsSource="{Binding EncryptedExtensionsList}">
                                 <ItemsControl.ItemsPanel>
@@ -253,31 +352,33 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="#F0F0F0" BorderBrush="#CCC" BorderThickness="1" CornerRadius="12" Padding="8,3" Margin="0,0,5,5">
+                                        <Border Style="{StaticResource TagStyle}">
                                             <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="{Binding}" VerticalAlignment="Center" FontSize="12"/>
+                                                <TextBlock Text="{Binding}" VerticalAlignment="Center" FontSize="12" Foreground="#34495E"/>
                                                 <Button Content="✕" Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}, Path=DataContext.RemoveExtensionCommand}" 
                                                         CommandParameter="{Binding}"
-                                                        Margin="8,0,0,0" Padding="0" FontSize="10" Background="Transparent" BorderBrush="Transparent" Foreground="#D32F2F" Cursor="Hand"/>
+                                                        Margin="8,0,0,0" Background="Transparent" BorderThickness="0" Foreground="#E74C3C" Cursor="Hand" FontWeight="Bold"/>
                                             </StackPanel>
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                        </StackPanel>
-                    </GroupBox>
 
-                    <GroupBox Header="{Binding Labels[BlockedProcesses]}" Margin="0,0,0,20" Padding="15" BorderBrush="#DDD" BorderThickness="1">
-                        <StackPanel>
-                            <TextBlock Text="{Binding Labels[BlockedProcesses]}" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                            <TextBlock Text="{Binding Labels[BlockedProcessesDesc]}" FontSize="11" Foreground="Gray" Margin="0,0,0,10"/>
+                            <Separator Margin="0,15,0,20"/>
 
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBox x:Name="NewProcessInputTextBox" Width="180" Height="28" VerticalContentAlignment="Center" 
-                                         Text="{Binding NewProcessInput, UpdateSourceTrigger=PropertyChanged}"/>
-                                <Button Content="+" Command="{Binding AddProcessCommand}" Width="30" Margin="5,0,0,0"
-                                        Background="#E7F3FF" BorderBrush="#0078D7" FontWeight="Bold"/>
-                            </StackPanel>
+                            <TextBlock Text="Blocked Processes" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,10"/>
+                            <TextBlock Text="Backups will pause if these processes are running" FontSize="11" Foreground="#95A5A6" Margin="0,0,0,15"/>
+
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding NewProcessInput, UpdateSourceTrigger=PropertyChanged}" 
+                                         Padding="10,8" VerticalContentAlignment="Center" BorderBrush="#D5DBDB"/>
+                                <Button Grid.Column="1" Content="Add" Command="{Binding AddProcessCommand}" 
+                                        Style="{StaticResource ActionButtonStyle}" Margin="10,0,0,0" Width="80"/>
+                            </Grid>
 
                             <ItemsControl ItemsSource="{Binding BlockedProcessesList}">
                                 <ItemsControl.ItemsPanel>
@@ -287,30 +388,65 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="#F0F0F0" BorderBrush="#CCC" BorderThickness="1" CornerRadius="12" Padding="8,3" Margin="0,0,5,5">
+                                        <Border Style="{StaticResource TagStyle}">
                                             <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="{Binding}" VerticalAlignment="Center" FontSize="12"/>
+                                                <TextBlock Text="{Binding}" VerticalAlignment="Center" FontSize="12" Foreground="#34495E"/>
                                                 <Button Content="✕" Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}, Path=DataContext.RemoveProcessCommand}" 
                                                         CommandParameter="{Binding}"
-                                                        Margin="8,0,0,0" Padding="0" FontSize="10" Background="Transparent" BorderBrush="Transparent" Foreground="#D32F2F" Cursor="Hand"/>
+                                                        Margin="8,0,0,0" Background="Transparent" BorderThickness="0" Foreground="#E74C3C" Cursor="Hand" FontWeight="Bold"/>
                                             </StackPanel>
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </StackPanel>
-                    </GroupBox>
-
-                    <Border Background="#FFF4CE" BorderBrush="#FFBA00" BorderThickness="1" Padding="10" CornerRadius="4"
-                            Visibility="{Binding RestartWarningVisibility}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="⚠️" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding Labels[RestartWarning]}" Foreground="#664D03" FontStyle="Italic" TextWrapping="Wrap" MaxWidth="700"/>
-                        </StackPanel>
                     </Border>
                 </StackPanel>
             </ScrollViewer>
-        </TabItem>
+        </Grid>
 
-    </TabControl>
+        <!-- Create Job Overlay (The "Separate Window" feel) -->
+        <Grid Grid.ColumnSpan="2" Background="#80000000" Visibility="{Binding IsCreateJobVisible, Converter={StaticResource BoolToVis}}">
+            <Border Background="White" CornerRadius="12" Width="500" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="30">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="15" Color="Black" Opacity="0.3" ShadowDepth="2"/>
+                </Border.Effect>
+                <StackPanel>
+                    <Grid Margin="0,0,0,25">
+                        <TextBlock Text="Create New Backup Job" FontSize="20" FontWeight="Bold" Foreground="#2C3E50"/>
+                        <Button Content="✕" Command="{Binding CloseCreateJobCommand}" HorizontalAlignment="Right" Background="Transparent" BorderThickness="0" FontSize="18" Foreground="#95A5A6" Cursor="Hand"/>
+                    </Grid>
+
+                    <TextBlock Text="Job Name" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,5"/>
+                    <TextBox Text="{Binding JobName, UpdateSourceTrigger=PropertyChanged}" Padding="10,8" Margin="0,0,0,20"/>
+
+                    <TextBlock Text="Source Directory" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,5"/>
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}" Padding="10,8"/>
+                        <Button Grid.Column="1" Content="📁" Command="{Binding BrowseSourceCommand}" Background="#F4F7F9" BorderBrush="#D5DBDB" Width="40" Margin="5,0,0,0"/>
+                    </Grid>
+
+                    <TextBlock Text="Target Directory" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,5"/>
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Text="{Binding TargetPath, UpdateSourceTrigger=PropertyChanged}" Padding="10,8"/>
+                        <Button Grid.Column="1" Content="📁" Command="{Binding BrowseTargetCommand}" Background="#F4F7F9" BorderBrush="#D5DBDB" Width="40" Margin="5,0,0,0"/>
+                    </Grid>
+
+                    <TextBlock Text="Backup Type" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding Source={StaticResource BackupTypeEnum}}" 
+                              SelectedItem="{Binding SelectedType}" Height="40" Margin="0,0,0,30"/>
+
+                    <Button Content="Create Backup Job" Command="{Binding CreateJobCommand}" Style="{StaticResource ActionButtonStyle}" Height="45" FontSize="15"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
 </Window>
