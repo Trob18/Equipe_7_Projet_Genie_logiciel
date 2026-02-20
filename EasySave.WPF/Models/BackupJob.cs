@@ -33,6 +33,7 @@ namespace EasySave.WPF.Models
         public string ShortTargetDirectory => GetShortPath(TargetDirectory);
 
         public BackupType Type { get; set; }
+        public string TranslatedType => ResourceSettings.GetString(Type.ToString());
 
         private string GetShortPath(string path)
         {
@@ -348,7 +349,7 @@ namespace EasySave.WPF.Models
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        public void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

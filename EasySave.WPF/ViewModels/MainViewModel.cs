@@ -102,7 +102,7 @@ namespace EasySave.WPF.ViewModels
                 {
                     AppSettings.Instance.EncryptAll = value;
                     OnPropertyChanged();
-                    OnPropertyChanged(nameof(EncryptAll));
+                    OnPropertyChanged(nameof(FilteredExtensions));
                 }
             }
         }
@@ -166,11 +166,14 @@ namespace EasySave.WPF.ViewModels
                 {
                     AppSettings.Instance.Language = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(Labels));
+                    StatusMessage = ResourceSettings.GetString("StatusReady");
 
-                    if (value == _startupLanguage)
-                        RestartWarningVisibility = Visibility.Collapsed;
-                    else
-                        RestartWarningVisibility = Visibility.Visible;
+                    foreach (var job in BackupJobs)
+                    {
+                        job.OnPropertyChanged(nameof(job.TranslatedType));
+                        job.OnPropertyChanged(nameof(job.ProgressText));
+                    }
                 }
             }
         }

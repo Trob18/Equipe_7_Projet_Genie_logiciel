@@ -138,9 +138,9 @@
             </StackPanel>
 
             <StackPanel Grid.Row="1">
-                <RadioButton Content="📂  Backups" Style="{StaticResource SidebarButtonStyle}" 
+                <RadioButton Content="{Binding Labels[TabHome]}" Style="{StaticResource SidebarButtonStyle}" 
                              IsChecked="True" x:Name="BackupsNavBtn"/>
-                <RadioButton Content="⚙️  Settings" Style="{StaticResource SidebarButtonStyle}"
+                <RadioButton Content="{Binding Labels[TabSettings]}" Style="{StaticResource SidebarButtonStyle}"
                              x:Name="SettingsNavBtn"/>
             </StackPanel>
 
@@ -159,7 +159,7 @@
                 <Grid Margin="25,0">
                     <TextBlock Text="{Binding StatusMessage}" Foreground="#7F8C8D" VerticalAlignment="Center" FontSize="13"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Button Content="+ Create Job" Command="{Binding OpenCreateJobCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,10,0"/>
+                        <Button Content="{Binding Labels[Create]}" Command="{Binding OpenCreateJobCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,10,0"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -184,8 +184,10 @@
 
                 <DataGrid x:Name="JobsDataGrid" ItemsSource="{Binding BackupJobs}" SelectedItem="{Binding SelectedJob}"
                           AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended" SelectionChanged="DataGrid_SelectionChanged"
-                          BorderThickness="0" Background="Transparent" GridLinesVisibility="None" HeadersVisibility="Column" RowHeight="60">
+                          BorderThickness="0" Background="Transparent" GridLinesVisibility="None" HeadersVisibility="Column" RowHeight="70">
                     <DataGrid.Resources>
+                        <!-- Fix Header Binding: Header must be a visual element or use binding proxy if RelativeSource fails in some WPF versions, 
+                             but here Template is better for dynamic refresh -->
                         <Style TargetType="DataGridColumnHeader">
                             <Setter Property="Background" Value="Transparent"/>
                             <Setter Property="Foreground" Value="#95A5A6"/>
@@ -197,42 +199,95 @@
                         </Style>
                         <Style TargetType="DataGridRow">
                             <Setter Property="Background" Value="White"/>
-                            <Setter Property="Margin" Value="0,0,0,5"/>
+                            <Setter Property="Margin" Value="0,0,0,8"/>
+                            <Setter Property="BorderBrush" Value="#ECF0F1"/>
+                            <Setter Property="BorderThickness" Value="1"/>
                             <Style.Triggers>
                                 <Trigger Property="IsSelected" Value="True">
                                     <Setter Property="Background" Value="#F2F8FD"/>
                                     <Setter Property="BorderBrush" Value="#2980B9"/>
-                                    <Setter Property="BorderThickness" Value="1,0,0,0"/>
                                 </Trigger>
                             </Style.Triggers>
                         </Style>
                         <Style TargetType="DataGridCell">
                             <Setter Property="BorderThickness" Value="0"/>
                             <Setter Property="VerticalContentAlignment" Value="Center"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="DataGridCell">
+                                        <Border Background="{TemplateBinding Background}" Padding="10,0">
+                                            <ContentPresenter VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
                         </Style>
                     </DataGrid.Resources>
 
                     <DataGrid.Columns>
-                        <DataGridTextColumn Binding="{Binding Name}" Header="Job Name" Width="180" FontWeight="SemiBold" Foreground="#2C3E50"/>
-                        <DataGridTemplateColumn Header="Directories" Width="*">
+                        <DataGridTemplateColumn Width="200">
+                            <DataGridTemplateColumn.Header>
+                                <TextBlock Text="{Binding DataContext.Labels[JobName], RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            </DataGridTemplateColumn.Header>
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding SourceDirectory}" FontSize="11" Foreground="#34495E" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding TargetDirectory}" FontSize="10" Foreground="#95A5A6" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" Foreground="#2C3E50" FontSize="14"/>
+                                        <TextBlock Text="{Binding State}" FontSize="10" Foreground="#2980B9" FontWeight="SemiBold"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Binding="{Binding Type}" Header="Type" Width="80"/>
-                        <DataGridTemplateColumn Header="Progress" Width="200">
+
+                        <DataGridTemplateColumn Width="*">
+                            <DataGridTemplateColumn.Header>
+                                <TextBlock Text="{Binding DataContext.Labels[Directories], RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            </DataGridTemplateColumn.Header>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                            <TextBlock Text="📁 Source: " FontSize="10" Foreground="#95A5A6" Width="60"/>
+                                            <TextBlock Text="{Binding SourceDirectory}" FontSize="11" Foreground="#34495E" TextTrimming="CharacterEllipsis" MaxWidth="300"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="🎯 Target: " FontSize="10" Foreground="#95A5A6" Width="60"/>
+                                            <TextBlock Text="{Binding TargetDirectory}" FontSize="11" Foreground="#34495E" TextTrimming="CharacterEllipsis" MaxWidth="300"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="100">
+                            <DataGridTemplateColumn.Header>
+                                <TextBlock Text="{Binding DataContext.Labels[Type], RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            </DataGridTemplateColumn.Header>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border Background="#EBEDEF" CornerRadius="4" Padding="8,4" HorizontalAlignment="Left">
+                                        <TextBlock Text="{Binding TranslatedType}" FontSize="11" FontWeight="SemiBold" Foreground="#5D6D7E"/>
+                                    </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="220">
+                            <DataGridTemplateColumn.Header>
+                                <TextBlock Text="{Binding DataContext.Labels[Progress], RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            </DataGridTemplateColumn.Header>
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Grid VerticalAlignment="Center">
-                                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                                        <TextBlock Text="{Binding ProgressText}" FontSize="10" Foreground="#7F8C8D" Margin="0,0,0,4"/>
-                                        <ProgressBar Value="{Binding Progress}" Grid.Row="1" Height="6" Background="#ECF0F1" BorderThickness="0">
-                                            <ProgressBar.Foreground><SolidColorBrush Color="#2980B9"/></ProgressBar.Foreground>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Text="{Binding ProgressText}" FontSize="10" Foreground="#7F8C8D" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                                        <ProgressBar Value="{Binding Progress}" Grid.Row="1" Height="8" Background="#ECF0F1" BorderThickness="0">
+                                            <ProgressBar.Foreground>
+                                                <SolidColorBrush Color="#2980B9"/>
+                                            </ProgressBar.Foreground>
                                         </ProgressBar>
                                     </Grid>
                                 </DataTemplate>
@@ -244,18 +299,18 @@
                 <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="20" Margin="0,20,0,0">
                     <Grid>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Selected Jobs: " VerticalAlignment="Center" Foreground="#7F8C8D"/>
-                            <TextBlock Text="{Binding SelectedJobsList.Count}" FontWeight="Bold" VerticalAlignment="Center" Foreground="#2C3E50" Margin="5,0,0,0"/>
+                            <TextBlock Text="{Binding Labels[SelectedJobs]}" VerticalAlignment="Center" Foreground="#7F8C8D"/>
+                            <TextBlock Text="{Binding SelectedJobsList.Count}" FontWeight="Bold" VerticalAlignment="Center" Foreground="#2C3E50" Margin="10,0,0,0" FontSize="16"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button Content="Delete" Command="{Binding DeleteJobCommand}" Style="{StaticResource DangerButtonStyle}" Width="100" Margin="0,0,10,0"/>
-                            <Button Content="Run Backup" Command="{Binding ExecuteJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="150"/>
+                            <Button Content="{Binding Labels[Delete]}" Command="{Binding DeleteJobCommand}" Style="{StaticResource DangerButtonStyle}" Width="120" Margin="0,0,10,0"/>
+                            <Button Content="{Binding Labels[Execute]}" Command="{Binding ExecuteJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="180"/>
                         </StackPanel>
                     </Grid>
                 </Border>
             </Grid>
 
-            <!-- NEW Settings View -->
+            <!-- Settings View -->
             <Grid Grid.Row="1" Margin="25">
                 <Grid.Style>
                     <Style TargetType="Grid">
@@ -271,22 +326,19 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel MaxWidth="900" HorizontalAlignment="Stretch">
                         
-                        <!-- Header & Search -->
                         <Grid Margin="0,0,0,30">
-                            <TextBlock Text="Settings" FontSize="28" FontWeight="Bold" Foreground="#2C3E50"/>
-                            <!-- <TextBox Width="250" HorizontalAlignment="Right" Padding="10,6" Tag="Search settings..." BorderBrush="#D5DBDB"/> -->
+                            <TextBlock Text="{Binding Labels[TabSettings]}" FontSize="28" FontWeight="Bold" Foreground="#2C3E50"/>
                         </Grid>
 
-                        <!-- SECTION: GENERAL -->
-                        <TextBlock Text="Application" Foreground="#95A5A6" FontWeight="Bold" FontSize="12" Margin="5,0,0,10"/>
+                        <TextBlock Text="{Binding Labels[General]}" Foreground="#95A5A6" FontWeight="Bold" FontSize="12" Margin="5,0,0,10"/>
                         
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
                                 <Grid Margin="0,0,0,20">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                     <StackPanel>
-                                        <TextBlock Text="Language" Style="{StaticResource SettingsTitleStyle}"/>
-                                        <TextBlock Text="Changes will apply after restarting the application" Style="{StaticResource SettingsDescStyle}"/>
+                                        <TextBlock Text="{Binding Labels[LangInterface]}" Style="{StaticResource SettingsTitleStyle}"/>
+                                        <TextBlock Text="{Binding Labels[LangInterfaceDesc]}" Style="{StaticResource SettingsDescStyle}"/>
                                     </StackPanel>
                                     <ComboBox Grid.Column="1" Width="180" Height="32" ItemsSource="{Binding Source={StaticResource LanguageEnum}}" SelectedItem="{Binding SelectedLanguage}"/>
                                 </Grid>
@@ -296,8 +348,8 @@
                                 <Grid Margin="0,0,0,20">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                     <StackPanel>
-                                        <TextBlock Text="Logging Format" Style="{StaticResource SettingsTitleStyle}"/>
-                                        <TextBlock Text="Select your preferred file format for logs" Style="{StaticResource SettingsDescStyle}"/>
+                                        <TextBlock Text="{Binding Labels[LogFormat]}" Style="{StaticResource SettingsTitleStyle}"/>
+                                        <TextBlock Text="{Binding Labels[LogFormatDesc]}" Style="{StaticResource SettingsDescStyle}"/>
                                     </StackPanel>
                                     <ComboBox Grid.Column="1" Width="180" Height="32" ItemsSource="{Binding LogFormats}" SelectedItem="{Binding SelectedLogFormat}"/>
                                 </Grid>
@@ -307,27 +359,48 @@
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                     <StackPanel>
-                                        <TextBlock Text="Log Server IP" Style="{StaticResource SettingsTitleStyle}"/>
-                                        <TextBlock Text="Enter IP address for remote logging via NetworkLogger" Style="{StaticResource SettingsDescStyle}"/>
+                                        <TextBlock Text="{Binding Labels[LogServerIP]}" Style="{StaticResource SettingsTitleStyle}"/>
+                                        <TextBlock Text="{Binding Labels[LogServerIPDesc]}" Style="{StaticResource SettingsDescStyle}"/>
                                     </StackPanel>
                                     <TextBox Grid.Column="1" Width="180" Height="32" VerticalContentAlignment="Center" Padding="8,0" Text="{Binding LogServerIP, UpdateSourceTrigger=PropertyChanged}"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
 
-                        <!-- SECTION: ENCRYPTION & BUSINESS -->
-                        <TextBlock Text="Backup &amp; Security" Foreground="#95A5A6" FontWeight="Bold" FontSize="12" Margin="5,15,0,10"/>
+                        <TextBlock Text="{Binding Labels[Encryption]}" Foreground="#95A5A6" FontWeight="Bold" FontSize="12" Margin="5,15,0,10"/>
 
-                        <!-- Encrypted Extensions -->
                         <Border Style="{StaticResource CardStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Labels[EncryptAll]}" Style="{StaticResource SettingsTitleStyle}"/>
+                                    <TextBlock Text="{Binding Labels[EncryptAllDesc]}" Style="{StaticResource SettingsDescStyle}"/>
+                                </StackPanel>
+                                <CheckBox Grid.Column="1" IsChecked="{Binding EncryptAll}" VerticalAlignment="Center">
+                                    <CheckBox.LayoutTransform><ScaleTransform ScaleX="1.5" ScaleY="1.5"/></CheckBox.LayoutTransform>
+                                </CheckBox>
+                            </Grid>
+                        </Border>
+
+                        <Border>
+                            <Border.Style>
+                                <Style TargetType="Border" BasedOn="{StaticResource CardStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding EncryptAll}" Value="True">
+                                            <Setter Property="Opacity" Value="0.5"/>
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
                             <Expander Background="Transparent" BorderThickness="0">
                                 <Expander.Header>
                                     <Grid Width="600">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="🔒" FontSize="18" Margin="0,0,15,0" VerticalAlignment="Center"/>
                                             <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="Encrypted Extensions" Style="{StaticResource SettingsTitleStyle}"/>
-                                                <TextBlock Text="Manage file types to encrypt during backup" Style="{StaticResource SettingsDescStyle}"/>
+                                                <TextBlock Text="{Binding Labels[EncryptExtensions]}" Style="{StaticResource SettingsTitleStyle}"/>
+                                                <TextBlock Text="{Binding Labels[EncryptAllDesc]}" Style="{StaticResource SettingsDescStyle}"/>
                                             </StackPanel>
                                         </StackPanel>
                                         <TextBlock Text="{Binding EncryptedExtensionsList.Count}" HorizontalAlignment="Right" Foreground="#2980B9" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
@@ -337,7 +410,7 @@
                                     <Grid Margin="0,0,0,15">
                                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                         <TextBox x:Name="ExtInput" Text="{Binding NewExtensionInput, UpdateSourceTrigger=PropertyChanged}" Padding="10,8" Tag="Add extensions (.txt, .pdf...)" BorderBrush="#D5DBDB"/>
-                                        <Button Grid.Column="1" Content="Add Extension" Command="{Binding AddExtensionCommand}" Style="{StaticResource ActionButtonStyle}" Margin="10,0,0,0" Width="130"/>
+                                        <Button Grid.Column="1" Content="{Binding Labels[AddExtension]}" Command="{Binding AddExtensionCommand}" Style="{StaticResource ActionButtonStyle}" Margin="10,0,0,0" Width="130"/>
                                     </Grid>
 
                                     <Border BorderBrush="#F2F4F4" BorderThickness="1" CornerRadius="4" Background="#FAFAFA">
@@ -360,7 +433,6 @@
                             </Expander>
                         </Border>
 
-                        <!-- Blocked Processes -->
                         <Border Style="{StaticResource CardStyle}">
                             <Expander Background="Transparent" BorderThickness="0">
                                 <Expander.Header>
@@ -368,8 +440,8 @@
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="🚫" FontSize="18" Margin="0,0,15,0" VerticalAlignment="Center"/>
                                             <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="Blocked Processes" Style="{StaticResource SettingsTitleStyle}"/>
-                                                <TextBlock Text="Backups will pause if these processes are running" Style="{StaticResource SettingsDescStyle}"/>
+                                                <TextBlock Text="{Binding Labels[BlockedProcesses]}" Style="{StaticResource SettingsTitleStyle}"/>
+                                                <TextBlock Text="{Binding Labels[BlockedProcessesDesc]}" Style="{StaticResource SettingsDescStyle}"/>
                                             </StackPanel>
                                         </StackPanel>
                                         <TextBlock Text="{Binding BlockedProcessesList.Count}" HorizontalAlignment="Right" Foreground="#2980B9" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
@@ -379,7 +451,7 @@
                                     <Grid Margin="0,0,0,15">
                                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                         <TextBox Text="{Binding NewProcessInput, UpdateSourceTrigger=PropertyChanged}" Padding="10,8" Tag="Add process name (e.g. calculator)..." BorderBrush="#D5DBDB"/>
-                                        <Button Grid.Column="1" Content="Add Process" Command="{Binding AddProcessCommand}" Style="{StaticResource ActionButtonStyle}" Margin="10,0,0,0" Width="130"/>
+                                        <Button Grid.Column="1" Content="{Binding Labels[AddProcess]}" Command="{Binding AddProcessCommand}" Style="{StaticResource ActionButtonStyle}" Margin="10,0,0,0" Width="130"/>
                                     </Grid>
 
                                     <Border BorderBrush="#F2F4F4" BorderThickness="1" CornerRadius="4" Background="#FAFAFA">
@@ -414,26 +486,26 @@
                 <Border.Effect><DropShadowEffect BlurRadius="15" Color="Black" Opacity="0.3" ShadowDepth="2"/></Border.Effect>
                 <StackPanel>
                     <Grid Margin="0,0,0,25">
-                        <TextBlock Text="Create New Backup Job" FontSize="20" FontWeight="Bold" Foreground="#2C3E50"/>
+                        <TextBlock Text="{Binding Labels[Create]}" FontSize="20" FontWeight="Bold" Foreground="#2C3E50"/>
                         <Button Content="✕" Command="{Binding CloseCreateJobCommand}" HorizontalAlignment="Right" Background="Transparent" BorderThickness="0" FontSize="18" Foreground="#95A5A6" Cursor="Hand"/>
                     </Grid>
-                    <TextBlock Text="Job Name" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,5"/>
+                    <TextBlock Text="{Binding Labels[JobName]}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,5"/>
                     <TextBox Text="{Binding JobName, UpdateSourceTrigger=PropertyChanged}" Padding="10,8" Margin="0,0,0,20"/>
-                    <TextBlock Text="Source Directory" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,5"/>
+                    <TextBlock Text="{Binding Labels[SourcePath]}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,5"/>
                     <Grid Margin="0,0,0,20">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                         <TextBox Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}" Padding="10,8"/>
                         <Button Grid.Column="1" Content="📁" Command="{Binding BrowseSourceCommand}" Background="#F4F7F9" BorderBrush="#D5DBDB" Width="40" Margin="5,0,0,0"/>
                     </Grid>
-                    <TextBlock Text="Target Directory" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,5"/>
+                    <TextBlock Text="{Binding Labels[TargetPath]}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,5"/>
                     <Grid Margin="0,0,0,20">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                         <TextBox Text="{Binding TargetPath, UpdateSourceTrigger=PropertyChanged}" Padding="10,8"/>
                         <Button Grid.Column="1" Content="📁" Command="{Binding BrowseTargetCommand}" Background="#F4F7F9" BorderBrush="#D5DBDB" Width="40" Margin="5,0,0,0"/>
                     </Grid>
-                    <TextBlock Text="Backup Type" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,5"/>
+                    <TextBlock Text="{Binding Labels[Type]}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,5"/>
                     <ComboBox ItemsSource="{Binding Source={StaticResource BackupTypeEnum}}" SelectedItem="{Binding SelectedType}" Height="40" Margin="0,0,0,30"/>
-                    <Button Content="Create Backup Job" Command="{Binding CreateJobCommand}" Style="{StaticResource ActionButtonStyle}" Height="45" FontSize="15"/>
+                    <Button Content="{Binding Labels[Create]}" Command="{Binding CreateJobCommand}" Style="{StaticResource ActionButtonStyle}" Height="45" FontSize="15"/>
                 </StackPanel>
             </Border>
         </Grid>

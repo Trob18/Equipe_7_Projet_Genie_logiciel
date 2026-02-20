@@ -44,7 +44,12 @@ namespace EasySave.WPF.Config
             { "LogServerIP", "IP du serveur de Logs :" },
             { "LogServerIPDesc", "Adresse IP pour les logs distants (ex: 192.168.1.10)" },
             { "ProcessBlockedMessage", "Le processus '{0}' est en cours d'exécution et doit être fermé pour continuer la sauvegarde." },
-            { "RestartWarning", "Le changement de langue nécessitera un redémarrage pour être complet." }
+            { "RestartWarning", "Le changement de langue nécessitera un redémarrage pour être complet." },
+            { "Directories", "Répertoires" },
+            { "Progress", "Progression" },
+            { "SelectedJobs", "Travaux sélectionnés :" },
+            { "Full", "Complète" },
+            { "Differential", "Différentielle" }
         };
 
         private static readonly Dictionary<string, string> _en = new Dictionary<string, string>
@@ -86,7 +91,12 @@ namespace EasySave.WPF.Config
             { "LogServerIP", "Log Server IP :" },
             { "LogServerIPDesc", "IP address for remote logs (e.g., 192.168.1.10)" },
             { "ProcessBlockedMessage", "The process '{0}' is running and must be closed to continue the backup." },
-            { "RestartWarning", "Language change requires a restart to be fully applied." }
+            { "RestartWarning", "Language change requires a restart to be fully applied." },
+            { "Directories", "Directories" },
+            { "Progress", "Progress" },
+            { "SelectedJobs", "Selected Jobs:" },
+            { "Full", "Full" },
+            { "Differential", "Differential" }
         };
 
         public static string GetString(string key)
