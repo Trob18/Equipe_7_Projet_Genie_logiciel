@@ -184,6 +184,9 @@ namespace EasySave.WPF.ViewModels
         public ICommand CreateJobCommand { get; }
         public ICommand DeleteJobCommand { get; }
         public ICommand ExecuteJobCommand { get; }
+        public ICommand PauseJobCommand { get; }
+        public ICommand ResumeJobCommand { get; }
+        public ICommand StopJobCommand { get; }
         public ICommand AddExtensionCommand { get; }
         public ICommand RemoveExtensionCommand { get; }
         public ICommand AddProcessCommand { get; }
@@ -223,7 +226,10 @@ namespace EasySave.WPF.ViewModels
 
             CreateJobCommand = new RelayCommand(param => CreateJob());
             DeleteJobCommand = new RelayCommand(param => DeleteJob(), param => SelectedJob != null);
-            ExecuteJobCommand = new RelayCommand(param => ExecuteJob(), param => SelectedJob != null || SelectedJobsList.Count > 0);
+            ExecuteJobCommand = new RelayCommand(param => ExecuteJob(), param => (SelectedJob != null || SelectedJobsList.Count > 0));
+            PauseJobCommand = new RelayCommand(param => PauseJob(), param => CanPauseJob());
+            ResumeJobCommand = new RelayCommand(param => ResumeJob(), param => CanResumeJob());
+            StopJobCommand = new RelayCommand(param => StopJob(), param => CanStopJob());
             AddExtensionCommand = new RelayCommand(param => AddExtension());
             RemoveExtensionCommand = new RelayCommand(param => RemoveExtension(param as string), param => param is string);
             AddProcessCommand = new RelayCommand(param => AddProcess());
@@ -234,6 +240,31 @@ namespace EasySave.WPF.ViewModels
             CloseCreateJobCommand = new RelayCommand(param => IsCreateJobVisible = false);
 
             StatusMessage = ResourceSettings.GetString("StatusReady");
+        }
+
+        private bool CanPauseJob() => (SelectedJobsList.Any(j => j.State == BackupState.Active) || (SelectedJob?.State == BackupState.Active));
+        private bool CanResumeJob() => (SelectedJobsList.Any(j => j.State == BackupState.Paused) || (SelectedJob?.State == BackupState.Paused));
+        private bool CanStopJob() => (SelectedJobsList.Any(j => j.State == BackupState.Active || j.State == BackupState.Paused) || (SelectedJob != null && (SelectedJob.State == BackupState.Active || SelectedJob.State == BackupState.Paused)));
+
+        private void PauseJob()
+        {
+            if (SelectedJobsList.Count > 0) foreach (var job in SelectedJobsList) job.Pause();
+            else SelectedJob?.Pause();
+            StatusMessage = ResourceSettings.GetString("JobsPaused") ?? "Travaux mis en pause";
+        }
+
+        private void ResumeJob()
+        {
+            if (SelectedJobsList.Count > 0) foreach (var job in SelectedJobsList) job.Resume();
+            else SelectedJob?.Resume();
+            StatusMessage = ResourceSettings.GetString("JobsResumed") ?? "Travaux repris";
+        }
+
+        private void StopJob()
+        {
+            if (SelectedJobsList.Count > 0) foreach (var job in SelectedJobsList) job.Stop();
+            else SelectedJob?.Stop();
+            StatusMessage = ResourceSettings.GetString("JobsStopped") ?? "Travaux arrêtés";
         }
 
         private void BrowseSource()

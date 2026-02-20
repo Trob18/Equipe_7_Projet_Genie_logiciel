@@ -48,6 +48,10 @@ namespace EasySave.WPF.Config
             { "Directories", "Répertoires" },
             { "Progress", "Progression" },
             { "SelectedJobs", "Travaux sélectionnés :" },
+            { "Transfer", "Transfert" },
+            { "JobsPaused", "Travaux en pause." },
+            { "JobsResumed", "Travaux repris." },
+            { "JobsStopped", "Travaux arrêtés." },
             { "Full", "Complète" },
             { "Differential", "Différentielle" }
         };
@@ -95,6 +99,10 @@ namespace EasySave.WPF.Config
             { "Directories", "Directories" },
             { "Progress", "Progress" },
             { "SelectedJobs", "Selected Jobs:" },
+            { "Transfer", "Transfer" },
+            { "JobsPaused", "Jobs paused." },
+            { "JobsResumed", "Jobs resumed." },
+            { "JobsStopped", "Jobs stopped." },
             { "Full", "Full" },
             { "Differential", "Differential" }
         };

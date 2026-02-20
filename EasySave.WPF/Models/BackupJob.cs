@@ -7,12 +7,16 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Windows; 
 
 namespace EasySave.WPF.Models
 {
     public class BackupJob : INotifyPropertyChanged
     {
+        private readonly ManualResetEventSlim _pauseEvent = new ManualResetEventSlim(true);
+        private bool _isStopped = false;
+
         public string Name { get; set; }
 
         private string _sourceDirectory;
@@ -47,7 +51,17 @@ namespace EasySave.WPF.Models
         public BackupState State
         {
             get => _state;
-            set { _state = value; OnPropertyChanged(); OnPropertyChanged(nameof(ProgressText)); }
+            set 
+            { 
+                _state = value; 
+                if (_state == BackupState.Paused)
+                    _pauseEvent.Reset();
+                else
+                    _pauseEvent.Set();
+
+                OnPropertyChanged(); 
+                OnPropertyChanged(nameof(ProgressText)); 
+            }
         }
 
         private string _remainingTimeText;
@@ -99,6 +113,15 @@ namespace EasySave.WPF.Models
             RemainingTimeText = "";
         }
 
+        public void Pause() => State = BackupState.Paused;
+        public void Resume() => State = BackupState.Active;
+        public void Stop()
+        {
+            _isStopped = true;
+            _pauseEvent.Set(); // Unblock if paused
+            State = BackupState.Inactive;
+        }
+
         // helper : exécuter une action sur le thread UI (si possible)
         private void RunOnUI(Action action)
         {
@@ -124,16 +147,51 @@ namespace EasySave.WPF.Models
             }
         }
 
+        private long _totalSize;
+        public long TotalSize
+        {
+            get => _totalSize;
+            set { _totalSize = value; OnPropertyChanged(); OnPropertyChanged(nameof(SizeProgressText)); }
+        }
+
+        private long _currentSizeProcessed;
+        public long CurrentSizeProcessed
+        {
+            get => _currentSizeProcessed;
+            set { _currentSizeProcessed = value; OnPropertyChanged(); OnPropertyChanged(nameof(SizeProgressText)); }
+        }
+
+        public string SizeProgressText => $"{FormatSize(CurrentSizeProcessed)} / {FormatSize(TotalSize)}";
+
+        private string FormatSize(long bytes)
+        {
+            string[] units = { "B", "KB", "MB", "GB", "TB" };
+            double doubleBytes = bytes;
+            int i = 0;
+            while (doubleBytes >= 1024 && i < units.Length - 1)
+            {
+                doubleBytes /= 1024;
+                i++;
+            }
+            return $"{doubleBytes:F2} {units[i]}";
+        }
+
         public void Execute()
         {
+            _isStopped = false;
+            _pauseEvent.Set();
+
             RunOnUI(() =>
             {
                 State = BackupState.Active;
                 Progress = 0;
+                CurrentSizeProcessed = 0;
+                TotalSize = 0;
                 RemainingTimeText = "";
             });
 
             Stopwatch overallStopwatch = Stopwatch.StartNew();
+            Stopwatch updateStopwatch = Stopwatch.StartNew();
 
             var blockedProcessNames = GetBlockedProcessNames();
 
@@ -172,20 +230,19 @@ namespace EasySave.WPF.Models
             int totalFiles = allFiles.Length;
             int processedCount = 0;
 
-            long totalSize = 0;
+            long calculatedTotalSize = 0;
             foreach (var f in allFiles)
             {
                 try
                 {
-                    totalSize += new FileInfo(f).Length;
+                    calculatedTotalSize += new FileInfo(f).Length;
                 }
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"Error getting file size for {f}: {ex.Message}");
                 }
             }
-
-            long currentSizeProcessed = 0;
+            TotalSize = calculatedTotalSize;
 
             // Revert to relative project path for CryptoSoft.exe
             string cryptoSoftPath = Path.Combine(
@@ -203,6 +260,9 @@ namespace EasySave.WPF.Models
 
             foreach (var filePath in allFiles)
             {
+                if (_isStopped) break;
+                _pauseEvent.Wait();
+
                 // si process métier apparaît pendant la sauvegarde
                 CheckBlockedProcesses(blockedProcessNames);
 
@@ -230,9 +290,14 @@ namespace EasySave.WPF.Models
                         long encryptionTime = 0;
 
                         Stopwatch stopwatchCopy = Stopwatch.StartNew();
-                        File.Copy(filePath, targetFilePath, true);
+                        
+                        // Chunk-based copy
+                        CopyFileInChunks(filePath, targetFilePath, totalFiles, processedCount, updateStopwatch);
+                        
                         stopwatchCopy.Stop();
                         copyTime = stopwatchCopy.ElapsedMilliseconds;
+
+                        if (_isStopped) break;
 
                         bool shouldEncrypt = false;
                         if (AppSettings.Instance.EncryptAll)
@@ -247,6 +312,7 @@ namespace EasySave.WPF.Models
 
                         if (shouldEncrypt && File.Exists(cryptoSoftPath))
                         {
+                            _pauseEvent.Wait();
                             try
                             {
                                 ProcessStartInfo startInfo = new ProcessStartInfo
@@ -278,15 +344,19 @@ namespace EasySave.WPF.Models
 
                         OnFileCopied?.Invoke(this, (filePath, targetFilePath, currentFileSize, copyTime, encryptionTime));
                     }
+                    else
+                    {
+                        // File skipped but counts as processed size for progress
+                        CurrentSizeProcessed += currentFileSize;
+                    }
 
                     processedCount++;
-                    currentSizeProcessed += currentFileSize;
 
                     long elapsedMs = overallStopwatch.ElapsedMilliseconds;
-                    if (elapsedMs > 500 && currentSizeProcessed > 0)
+                    if (elapsedMs > 500 && CurrentSizeProcessed > 0)
                     {
-                        double bytesPerMs = (double)currentSizeProcessed / elapsedMs;
-                        long remainingBytes = totalSize - currentSizeProcessed;
+                        double bytesPerMs = (double)CurrentSizeProcessed / elapsedMs;
+                        long remainingBytes = TotalSize - CurrentSizeProcessed;
                         double remainingMs = remainingBytes / bytesPerMs;
                         TimeSpan t = TimeSpan.FromMilliseconds(remainingMs);
 
@@ -294,11 +364,12 @@ namespace EasySave.WPF.Models
                         RunOnUI(() => RemainingTimeText = t.ToString(@"hh\:mm\:ss"));
                     }
 
+                    // Force update after each file anyway
                     OnProgressUpdate?.Invoke(this, new BackupProgressEventArgs(
                         totalFiles,
                         processedCount,
-                        totalSize,
-                        currentSizeProcessed,
+                        TotalSize,
+                        CurrentSizeProcessed,
                         Path.GetFileName(filePath),
                         filePath,
                         targetFilePath
@@ -312,6 +383,7 @@ namespace EasySave.WPF.Models
             }
 
             overallStopwatch.Stop();
+            updateStopwatch.Stop();
 
             RunOnUI(() =>
             {
@@ -319,6 +391,41 @@ namespace EasySave.WPF.Models
                 RemainingTimeText = "";
                 // (Progress restera à 100 via les events, sinon tu peux forcer ici si tu veux)
             });
+        }
+
+        private void CopyFileInChunks(string sourcePath, string targetPath, int totalFiles, int processedCount, Stopwatch updateStopwatch)
+        {
+            const int bufferSize = 64 * 1024; // 64KB
+            byte[] buffer = new byte[bufferSize];
+
+            using (FileStream sourceStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read))
+            using (FileStream targetStream = new FileStream(targetPath, FileMode.Create, FileAccess.Write))
+            {
+                int bytesRead;
+                while ((bytesRead = sourceStream.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    if (_isStopped) return;
+                    _pauseEvent.Wait();
+
+                    targetStream.Write(buffer, 0, bytesRead);
+                    CurrentSizeProcessed += bytesRead;
+
+                    // Update UI every 200ms
+                    if (updateStopwatch.ElapsedMilliseconds > 200)
+                    {
+                        OnProgressUpdate?.Invoke(this, new BackupProgressEventArgs(
+                            totalFiles,
+                            processedCount,
+                            TotalSize,
+                            CurrentSizeProcessed,
+                            Path.GetFileName(sourcePath),
+                            sourcePath,
+                            targetPath
+                        ));
+                        updateStopwatch.Restart();
+                    }
+                }
+            }
         }
 
         private List<string> GetBlockedProcessNames()
