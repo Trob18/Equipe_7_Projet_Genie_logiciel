@@ -54,6 +54,45 @@ namespace EasySave.WPF.ViewModels
         private string _newProcessInput;
         public string NewProcessInput { get => _newProcessInput; set { _newProcessInput = value; OnPropertyChanged(); } }
 
+        private string _settingsSearchText;
+        public string SettingsSearchText
+        {
+            get => _settingsSearchText;
+            set { _settingsSearchText = value; OnPropertyChanged(); OnPropertyChanged(nameof(FilteredExtensions)); OnPropertyChanged(nameof(FilteredProcesses)); }
+        }
+
+        private string _extensionsSearchText;
+        public string ExtensionsSearchText
+        {
+            get => _extensionsSearchText;
+            set { _extensionsSearchText = value; OnPropertyChanged(); OnPropertyChanged(nameof(FilteredExtensions)); }
+        }
+
+        private string _processesSearchText;
+        public string ProcessesSearchText
+        {
+            get => _processesSearchText;
+            set { _processesSearchText = value; OnPropertyChanged(); OnPropertyChanged(nameof(FilteredProcesses)); }
+        }
+
+        public IEnumerable<string> FilteredExtensions
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(ExtensionsSearchText)) return EncryptedExtensionsList;
+                return EncryptedExtensionsList.Where(e => e.Contains(ExtensionsSearchText.ToLower()));
+            }
+        }
+
+        public IEnumerable<string> FilteredProcesses
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(ProcessesSearchText)) return BlockedProcessesList;
+                return BlockedProcessesList.Where(p => p.Contains(ProcessesSearchText.ToLower()));
+            }
+        }
+
         public bool EncryptAll
         {
             get => AppSettings.Instance.EncryptAll;
@@ -271,6 +310,7 @@ namespace EasySave.WPF.ViewModels
                 }
                 SaveEncryptedExtensions();
                 NewExtensionInput = "";
+                OnPropertyChanged(nameof(FilteredExtensions));
             }
         }
         public string LogServerIP
@@ -292,6 +332,7 @@ namespace EasySave.WPF.ViewModels
             {
                 EncryptedExtensionsList.Remove(extension);
                 SaveEncryptedExtensions();
+                OnPropertyChanged(nameof(FilteredExtensions));
             }
         }
 
@@ -317,6 +358,7 @@ namespace EasySave.WPF.ViewModels
                 }
                 SaveBlockedProcesses();
                 NewProcessInput = "";
+                OnPropertyChanged(nameof(FilteredProcesses));
             }
         }
 
@@ -326,6 +368,7 @@ namespace EasySave.WPF.ViewModels
             {
                 BlockedProcessesList.Remove(process);
                 SaveBlockedProcesses();
+                OnPropertyChanged(nameof(FilteredProcesses));
             }
         }
 
