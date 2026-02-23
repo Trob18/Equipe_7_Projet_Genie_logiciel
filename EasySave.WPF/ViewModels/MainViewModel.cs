@@ -141,6 +141,13 @@ namespace EasySave.WPF.ViewModels
             set { _isCreateJobVisible = value; OnPropertyChanged(); }
         }
 
+        private bool _isEditJobVisible;
+        public bool IsEditJobVisible
+        {
+            get => _isEditJobVisible;
+            set { _isEditJobVisible = value; OnPropertyChanged(); }
+        }
+
         private int _selectedTab;
         public int SelectedTab
         {
@@ -236,6 +243,9 @@ namespace EasySave.WPF.ViewModels
         public ICommand BrowseTargetCommand { get; }
         public ICommand OpenCreateJobCommand { get; }
         public ICommand CloseCreateJobCommand { get; }
+        public ICommand OpenEditJobCommand { get; }
+        public ICommand UpdateJobCommand { get; }
+        public ICommand CloseEditJobCommand { get; }
 
         // --- COMMANDES POUR LES EXTENSIONS PRIORITAIRES ---
         public ICommand AddPriorityExtensionCommand { get; }
@@ -295,6 +305,9 @@ namespace EasySave.WPF.ViewModels
             BrowseTargetCommand = new RelayCommand(param => BrowseTarget());
             OpenCreateJobCommand = new RelayCommand(param => IsCreateJobVisible = true);
             CloseCreateJobCommand = new RelayCommand(param => IsCreateJobVisible = false);
+            OpenEditJobCommand = new RelayCommand(param => OpenEditJob(), param => SelectedJobsList != null && SelectedJobsList.Count == 1);
+            UpdateJobCommand = new RelayCommand(param => UpdateJob());
+            CloseEditJobCommand = new RelayCommand(param => IsEditJobVisible = false);
 
             // --- INITIALISATION COMMANDES EXTENSIONS PRIORITAIRES ---
             AddPriorityExtensionCommand = new RelayCommand(param => AddPriorityExtension());
@@ -534,6 +547,48 @@ namespace EasySave.WPF.ViewModels
             StatusMessage = $"{JobName} {ResourceSettings.GetString("JobCreated")}";
             JobName = ""; SourcePath = ""; TargetPath = "";
             IsCreateJobVisible = false;
+        }
+
+        private void OpenEditJob()
+        {
+            if (SelectedJob == null) return;
+
+            JobName = SelectedJob.Name;
+            SourcePath = SelectedJob.SourceDirectory;
+            TargetPath = SelectedJob.TargetDirectory;
+            SelectedType = SelectedJob.Type;
+            IsEditJobVisible = true;
+        }
+
+        private void UpdateJob()
+        {
+            if (SelectedJob == null) return;
+
+            if (string.IsNullOrWhiteSpace(JobName) || string.IsNullOrWhiteSpace(SourcePath) || string.IsNullOrWhiteSpace(TargetPath))
+            {
+                StatusMessage = ResourceSettings.GetString("EmptyFields");
+                return;
+            }
+
+            SelectedJob.Name = JobName;
+            SelectedJob.SourceDirectory = SourcePath;
+            SelectedJob.TargetDirectory = TargetPath;
+            SelectedJob.Type = SelectedType;
+
+            SelectedJob.OnPropertyChanged(nameof(SelectedJob.Name));
+            SelectedJob.OnPropertyChanged(nameof(SelectedJob.SourceDirectory));
+            SelectedJob.OnPropertyChanged(nameof(SelectedJob.TargetDirectory));
+            SelectedJob.OnPropertyChanged(nameof(SelectedJob.Type));
+            SelectedJob.OnPropertyChanged(nameof(SelectedJob.TranslatedType));
+            SelectedJob.OnPropertyChanged(nameof(SelectedJob.ShortSourceDirectory));
+            SelectedJob.OnPropertyChanged(nameof(SelectedJob.ShortTargetDirectory));
+
+            SelectedJob.InitializeJobData();
+            SaveJobs();
+
+            StatusMessage = $"{JobName} mis à jour.";
+            JobName = ""; SourcePath = ""; TargetPath = "";
+            IsEditJobVisible = false;
         }
 
         private void DeleteJob()
