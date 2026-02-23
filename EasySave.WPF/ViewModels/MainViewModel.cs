@@ -492,7 +492,7 @@ namespace EasySave.WPF.ViewModels
                 // handlers spécifiques à CE job
                 EventHandler<BackupProgressEventArgs> progressHandler = (sender, args) =>
                 {
-                    Application.Current.Dispatcher.Invoke(() =>
+                    Application.Current.Dispatcher.InvokeAsync(() =>
                     {
                         // Global : sera forcément “écrasé” par le dernier événement reçu (normal)
                         ProgressValue = args.Percentage;
@@ -520,16 +520,19 @@ namespace EasySave.WPF.ViewModels
 
                 EventHandler<(string source, string target, long size, float time, float encryptionTime)> fileCopiedHandler = (sender, data) =>
                 {
-                    var logEntry = new Log.Models.LogEntry
+                    Task.Run(() =>
                     {
-                        Name = job.Name,
-                        SourceFile = data.source,
-                        TargetFile = data.target,
-                        FileSize = data.size,
-                        TransferTime = data.time,
-                        EncryptionTime = data.encryptionTime,
-                    };
-                    _logger.WriteLog(logEntry);
+                        var logEntry = new Log.Models.LogEntry
+                        {
+                            Name = job.Name,
+                            SourceFile = data.source,
+                            TargetFile = data.target,
+                            FileSize = data.size,
+                            TransferTime = data.time,
+                            EncryptionTime = data.encryptionTime,
+                        };
+                        _logger.WriteLog(logEntry);
+                    });
                 };
 
                 job.OnProgressUpdate += progressHandler;

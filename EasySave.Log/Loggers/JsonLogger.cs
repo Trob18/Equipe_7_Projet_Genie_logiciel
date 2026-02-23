@@ -10,10 +10,36 @@ namespace EasySave.Log.Loggers
     public class JsonLogger : ILogger
     {
         private readonly string _logDirectory;
+        private static readonly object _lock = new object();
+        private static List<LogEntry> _currentLogs = null;
+        private static string _currentLogFile = null;
 
         public JsonLogger(string logDirectory)
         {
             _logDirectory = logDirectory;
+        }
+
+        private void EnsureLoaded(string filePath)
+        {
+            if (_currentLogs != null && _currentLogFile == filePath) return;
+
+            if (File.Exists(filePath))
+            {
+                try
+                {
+                    string jsonContent = File.ReadAllText(filePath);
+                    _currentLogs = JsonSerializer.Deserialize<List<LogEntry>>(jsonContent) ?? new List<LogEntry>();
+                }
+                catch
+                {
+                    _currentLogs = new List<LogEntry>();
+                }
+            }
+            else
+            {
+                _currentLogs = new List<LogEntry>();
+            }
+            _currentLogFile = filePath;
         }
 
         public void WriteLog(LogEntry logEntry)
@@ -21,33 +47,20 @@ namespace EasySave.Log.Loggers
             string fileName = $"{DateTime.Now:yyyy-MM-dd}.json";
             string filePath = Path.Combine(_logDirectory, fileName);
 
-            if (!Directory.Exists(_logDirectory))
+            lock (_lock)
             {
-                Directory.CreateDirectory(_logDirectory);
-            }
-
-            var logs = new List<LogEntry>();
-
-            if (File.Exists(filePath))
-            {
-                try
+                if (!Directory.Exists(_logDirectory))
                 {
-                    string jsonContent = File.ReadAllText(filePath);
-                    logs = JsonSerializer.Deserialize<List<LogEntry>>(jsonContent) ?? new List<LogEntry>();
+                    Directory.CreateDirectory(_logDirectory);
                 }
-                catch
-                {
-                    logs = new List<LogEntry>();
-                }
+
+                EnsureLoaded(filePath);
+                _currentLogs.Add(logEntry);
+
+                var options = new JsonSerializerOptions { WriteIndented = true };
+                string jsonString = JsonSerializer.Serialize(_currentLogs, options);
+                File.WriteAllText(filePath, jsonString);
             }
-
-            logs.Add(logEntry);
-
-            var options = new JsonSerializerOptions { WriteIndented = true };
-
-            string jsonString = JsonSerializer.Serialize(logs, options);
-
-            File.WriteAllText(filePath, jsonString);
         }
     }
 }

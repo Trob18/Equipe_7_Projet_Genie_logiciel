@@ -403,6 +403,8 @@ namespace EasySave.WPF.Models
                             _pauseEvent.Wait();
                             try
                             {
+                                RunOnUI(() => ThroughputText = ResourceSettings.GetString("EncryptionInProgress") ?? "Chiffrement en cours...");
+
                                 ProcessStartInfo startInfo = new ProcessStartInfo
                                 {
                                     FileName = cryptoSoftPath,
@@ -440,17 +442,7 @@ namespace EasySave.WPF.Models
 
                     processedCount++;
 
-                    long elapsedMs = overallStopwatch.ElapsedMilliseconds;
-                    if (elapsedMs > 500 && CurrentSizeProcessed > 0)
-                    {
-                        double bytesPerMs = (double)CurrentSizeProcessed / elapsedMs;
-                        long remainingBytes = TotalSize - CurrentSizeProcessed;
-                        double remainingMs = remainingBytes / bytesPerMs;
-                        TimeSpan t = TimeSpan.FromMilliseconds(remainingMs);
-
-                        // thread-safe
-                        RunOnUI(() => RemainingTimeText = t.ToString(@"hh\:mm\:ss"));
-                    }
+                    // Temps restant maintenant géré dans CopyFileInChunks pour être basé sur le débit instantané.
 
                     // Force update after each file anyway
                     OnProgressUpdate?.Invoke(this, new BackupProgressEventArgs(
@@ -508,6 +500,16 @@ namespace EasySave.WPF.Models
                         double speed = bytesSinceLastUpdate / elapsedSeconds;
 
                         ThroughputText = FormatSpeed(speed);
+                        
+                        // Calcul du temps restant basé sur le débit actuel
+                        if (speed > 0)
+                        {
+                            long remainingBytes = TotalSize - CurrentSizeProcessed;
+                            double remainingSeconds = remainingBytes / speed;
+                            TimeSpan t = TimeSpan.FromSeconds(remainingSeconds);
+                            RunOnUI(() => RemainingTimeText = t.ToString(@"hh\:mm\:ss"));
+                        }
+
                         lastSize = CurrentSizeProcessed;
 
                         OnProgressUpdate?.Invoke(this, new BackupProgressEventArgs(
