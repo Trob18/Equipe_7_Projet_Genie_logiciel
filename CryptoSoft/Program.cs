@@ -1,50 +1,66 @@
-﻿namespace CryptoSoft;
+﻿using System;
+using System.Threading;
 
-public static class Program
+namespace CryptoSoft
 {
-    public static void Main(string[] args)
+    public static class Program
     {
-        try
+        private const string MutexName = @"Global\CryptoSoft_MonoInstance";
+
+        public static int Main(string[] args)
         {
-            if (args.Length < 2)
+            const int ERR_BAD_ARGS = -10;
+            const int ERR_BUSY = -20;
+            const int ERR_EXCEPTION = -99;
+
+            if (args == null || args.Length < 2)
             {
-                Console.WriteLine("Usage: CryptoSoft.exe <file_or_directory_path> <key>");
-                Environment.Exit(-1);
+                Console.WriteLine("Usage: CryptoSoft.exe <filePath> <key>");
+                return ERR_BAD_ARGS;
             }
 
-            string path = args[0];
+            string filePath = args[0];
             string key = args[1];
-            int totalTime = 0;
 
-            if (Directory.Exists(path))
+            int timeoutMs = 0;
+ 
+            using var mutex = new Mutex(false, MutexName);
+
+            bool taken = false;
+
+            try
             {
-                // Mode dossier : on traite tout récursivement
-                string[] files = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories);
-                foreach (var file in files)
+                try
                 {
-                    var fileManager = new FileManager(file, key);
-                    int time = fileManager.TransformFile();
-                    if (time > 0) totalTime += time;
+                    taken = mutex.WaitOne(timeoutMs);
+                    if (!taken)
+                    {
+                        Console.WriteLine("CryptoSoft is already running.");
+                        return ERR_BUSY;
+                    }
+                }
+                catch (AbandonedMutexException)
+                {
+                    taken = true;
+                }
+
+                var fileManager = new FileManager(filePath, key);
+                int elapsedTime = fileManager.TransformFile();
+
+                return elapsedTime;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return ERR_EXCEPTION;
+            }
+            finally
+            {
+                if (taken)
+                {
+                    try { mutex.ReleaseMutex(); } catch { }
                 }
             }
-            else if (File.Exists(path))
-            {
-                // Mode fichier unique
-                var fileManager = new FileManager(path, key);
-                totalTime = fileManager.TransformFile();
-            }
-            else
-            {
-                Console.WriteLine("Path not found.");
-                Environment.Exit(-2);
-            }
-
-            Environment.Exit(totalTime);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e.Message);
-            Environment.Exit(-99);
         }
     }
 }

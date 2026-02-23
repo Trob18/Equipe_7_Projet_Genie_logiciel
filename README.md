@@ -1,95 +1,130 @@
-# EasySave – Logiciel de sauvegarde (Projet ProSoft)
+# EasySave – Backup Software (ProSoft Project)
 
-## Contexte du projet
+## Project Context
 
-EasySave est un projet de génie logiciel réalisé pour l’entreprise fictive **ProSoft**, éditeur de logiciels.
-L’objectif est de concevoir et développer un **logiciel de sauvegarde professionnel**, robuste, évolutif et maintenable, destiné à des environnements informatiques variés (postes utilisateurs, serveurs, réseaux).
+EasySave is a software engineering project developed for the fictional company **ProSoft**, a software publisher.
+The objective is to design and develop a **professional backup software solution** that is robust, scalable, and maintainable, suitable for various IT environments (workstations, servers, networks).
 
-Le projet s’inscrit dans une logique **industrielle** avec :
-- Gestion de versions (majeures / mineures).
-- Documentation utilisateur et support.
-- Anticipation des évolutions fonctionnelles.
-- Réduction des coûts de développement futurs.
+The project follows an **industrial-oriented approach**, including:
 
-## Objectif du logiciel EasySave
+* Version management (major / minor releases).
+* User and technical support documentation.
+* Anticipation of future functional evolutions.
+* Reduction of long-term development and maintenance costs.
 
-EasySave permet à un utilisateur de :
-- Définir des **travaux de sauvegarde** (jobs).
-- Sauvegarder des répertoires (fichiers et sous-répertoires).
-- Suivre l’exécution et l’état d’avancement des sauvegardes.
-- Produire des **logs exploitables** par le support technique (Local ou Distant).
 
-Un **travail de sauvegarde** représente une configuration persistante associant :
-- Un nom.
-- Un répertoire source.
-- Un répertoire cible.
-- Un type de sauvegarde (complète ou différentielle).
 
-## Découpage du projet
+## EasySave Software Objective
 
-Le développement est organisé en **trois livrables successifs** :
+EasySave enables users to:
 
-### Livrable 1 – EasySave v1.0
-- Application **console .NET**.
-- Jusqu’à **5 travaux de sauvegarde**.
-- Sauvegardes complètes et différentielles.
-- Logs journaliers au format **JSON**.
-- Fichier d’état temps réel (JSON).
+* Define **backup jobs**.
+* Back up directories (files and subdirectories).
+* Monitor execution and progress status.
+* Generate **logs usable by technical support** (Local or Remote).
 
-### Livrable 2 – EasySave v1.1 et v2.0
-- Choix du format de logs (JSON / XML).
-- Interface graphique **WPF (MVVM)**.
-- Nombre de travaux illimité.
-- Chiffrement de fichiers via **CryptoSoft**.
-- Détection et gestion d’un logiciel métier (Business Software).
+A **backup job** represents a persistent configuration including:
 
-### Livrable 3 – EasySave v3.0 (Version Actuelle)
-- **Architecture Log Distante** via Docker (Serveur TCP).
-- Sauvegardes en **parallèle** (Multithreading).
-- Gestion des priorités de fichiers.
-- Contrôle des travaux temps réel (Play / Pause / Stop).
-- Pause automatique globale en cas de lancement d'un logiciel métier.
+* A name.
+* A source directory.
+* A target directory.
+* A backup type (full or differential).
 
-## Installation et Démarrage (Serveur de Logs Docker)
 
-La version 3.0 intègre un module de logs distants. Pour l'utiliser, le serveur de réception doit être lancé via Docker.
 
-**Prérequis :**
-- Docker Desktop installé et lancé.
+## Project Breakdown
 
-**Procédure de lancement :**
-1. Ouvrez un terminal à la racine du projet (là où se trouve le fichier `docker-compose.yml`).
-2. Exécutez la commande suivante :
+The development is organized into **three successive deliverables**:
+
+### Deliverable 1 – EasySave v1.0
+
+* **.NET Console** application.
+* Up to **5 backup jobs**.
+* Full and differential backups.
+* Daily logs in **JSON** format.
+* Real-time state file (JSON).
+
+
+
+### Deliverable 2 – EasySave v1.1 and v2.0
+
+* Log format selection (JSON / XML).
+* **WPF graphical interface (MVVM pattern)**.
+* Unlimited number of backup jobs.
+* File encryption via **CryptoSoft**.
+* Business software detection and management.
+
+
+
+### Deliverable 3 – EasySave v3.0 (Current Version)
+
+* **Remote Log Architecture** via Docker (TCP Server).
+* **Parallel backups** (Multithreading).
+* File priority management.
+* Real-time job control (Play / Pause / Stop).
+* Global automatic pause when business software is launched.
+
+
+
+## Installation and Startup (Docker Log Server)
+
+Version 3.0 integrates a remote logging module. To use it, the log reception server must be started via Docker.
+
+### Prerequisites:
+
+* Docker Desktop installed and running.
+
+### Startup Procedure:
+
+1. Open a terminal at the root of the project (where the `docker-compose.yml` file is located).
+2. Run the following command:
+
    ```bash
    docker-compose up -d --build
    ```
-3. Le serveur écoute sur le port 9000.
-4. Les logs reçus sont stockés automatiquement dans le dossier ./logs à la racine du projet.   
-Pour arrêter le serveur :
-   ```bash
-   docker-compose down
-   ```
-## Technologies utilisées
-* Langage : C#
-* Framework : .NET 8
-* Interface : WPF (Pattern MVVM)
-* Infrastructure : Docker (pour les logs distants)
-* IDE : Visual Studio 2022+
-* Gestion de version : Git / GitHub
+3. The server listens on port **9000**.
+4. Received logs are automatically stored in the `./logs` folder at the project root.
 
-## Organisation du dépôt
-* /EasySave.WPF : Application principale (Interface graphique).
-* /EasySave.Log : Librairie de logging (DLL / Interface ILogger).
-* /EasySave.LogServer : Serveur de logs TCP (Application Console pour Docker).
-* /CryptoSoft : Module de chiffrement externe (XOR).
-* docker-compose.yml : Configuration pour le déploiement du serveur de logs.
-* /README.md : Documentation du projet.
+To stop the server:
 
-## Équipe projet
-Projet réalisé par une équipe de 3 personnes :
-* Chef de projet / coordination technique.
-* Développeur A : Logique métier et moteur de sauvegarde parallèle.
-* Développeur B : Logs distants, état temps réel, interface utilisateur.
+```bash
+docker-compose down
+```
 
-## Licence
-* Projet réalisé dans un cadre pédagogique.
+
+
+## Technologies Used
+
+* Language: **C#**
+* Framework: **.NET 8**
+* Interface: **WPF (MVVM Pattern)**
+* Infrastructure: **Docker** (for remote logs)
+* IDE: **Visual Studio 2022+**
+* Version Control: **Git / GitHub**
+
+
+
+## Repository Structure
+
+* `/EasySave.WPF` : Main application (Graphical Interface).
+* `/EasySave.Log` : Logging library (DLL / ILogger interface).
+* `/EasySave.LogServer` : TCP Log Server (Console application for Docker).
+* `/CryptoSoft` : External encryption module (XOR-based).
+* `docker-compose.yml` : Configuration for log server deployment.
+* `/README.md` : Project documentation.
+
+
+
+## Project Team
+
+Project carried out by a team of 3 members:
+
+* Project Manager / Technical Coordinator.
+* Developer A: Business logic and parallel backup engine.
+* Developer B: Remote logs, real-time state management, user interface.
+
+
+
+## License
+
+* Project developed within an educational context.
