@@ -8,6 +8,7 @@
         xmlns:enums="clr-namespace:EasySave.WPF.Enumerations"
         mc:Ignorable="d"
         Title="EasySave v3.0" Height="750" Width="1050"
+        WindowState="Maximized"
         WindowStartupLocation="CenterScreen"
         Background="#F4F7F9">
 
