@@ -11,7 +11,7 @@ namespace EasySave.WPF.Models
         public string CurrentFileName { get; set; }
         public string CurrentSourcePath { get; set; }
         public string CurrentTargetPath { get; set; }
-        public int Percentage => TotalFiles == 0 ? 0 : (FilesProcessed * 100 / TotalFiles);
+        public int Percentage => TotalSize == 0 ? 0 : (int)(SizeProcessed * 100 / TotalSize);
 
         public BackupProgressEventArgs(int total, int processed, long totalSize, long sizeProcessed, string currentFile, string src, string dest)
         {
