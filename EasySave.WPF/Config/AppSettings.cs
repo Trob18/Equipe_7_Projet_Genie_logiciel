@@ -114,6 +114,20 @@ namespace EasySave.WPF.Config
             }
         }
 
+        private long _maxLargeFileSizeMO;
+        public long MaxLargeFileSizeMO
+        {
+            get => _maxLargeFileSizeMO;
+            set
+            {
+                if (_maxLargeFileSizeMO != value)
+                {
+                    _maxLargeFileSizeMO = value;
+                    SaveSettings();
+                }
+            }
+        }
+
         public static AppSettings Instance
         {
             get
@@ -138,6 +152,7 @@ namespace EasySave.WPF.Config
             _encryptedExtensions = "";
             _encryptAll = false;
             _blockedProcesses = "notepad,mspaint";
+            _maxLargeFileSizeMO = 100; // Default 100 MO
             LogDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
             StateDirectory = AppDomain.CurrentDomain.BaseDirectory;
             LoadSettings();
@@ -162,6 +177,7 @@ namespace EasySave.WPF.Config
                         _encryptedExtensions = savedSettings.EncryptedExtensions;
                         _encryptAll = savedSettings.EncryptAll;
                         _blockedProcesses = savedSettings.BlockedProcesses ?? "notepad,mspaint";
+                        _maxLargeFileSizeMO = savedSettings.MaxLargeFileSizeMO != 0 ? savedSettings.MaxLargeFileSizeMO : 100;
                     }
                 }
                 catch
@@ -180,7 +196,8 @@ namespace EasySave.WPF.Config
                 LogFormat = _logFormat,
                 EncryptedExtensions = _encryptedExtensions,
                 EncryptAll = _encryptAll,
-                BlockedProcesses = _blockedProcesses
+                BlockedProcesses = _blockedProcesses,
+                MaxLargeFileSizeMO = _maxLargeFileSizeMO
             };
 
             var options = new JsonSerializerOptions { WriteIndented = true };
@@ -198,5 +215,6 @@ namespace EasySave.WPF.Config
         public bool EncryptAll { get; set; }
         public string BlockedProcesses { get; set; }
         public string PriorityExtensions { get; set; }
+        public long MaxLargeFileSizeMO { get; set; }
     }
 }

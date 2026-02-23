@@ -22,11 +22,8 @@ namespace CryptoSoft
             string filePath = args[0];
             string key = args[1];
 
-            // Option: attendre ou refuser direct
-            // - WaitOne(0) => refuse direct si déjà occupé
-            // - WaitOne(timeout) => attend un peu
-            int timeoutMs = 0; // "refus immédiat" 
-
+            int timeoutMs = 0;
+ 
             using var mutex = new Mutex(false, MutexName);
 
             bool taken = false;
@@ -50,7 +47,7 @@ namespace CryptoSoft
                 var fileManager = new FileManager(filePath, key);
                 int elapsedTime = fileManager.TransformFile();
 
-                return elapsedTime; // >=0 OK, <0 erreur
+                return elapsedTime;
             }
             catch (Exception e)
             {
