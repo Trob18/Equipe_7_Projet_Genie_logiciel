@@ -6,6 +6,7 @@ using System.Diagnostics;
 namespace EasySave.Tests
 {
     [TestClass]
+    [DoNotParallelize]
     public class CryptoSoftTests
     {
         private string _tempDirectory;
@@ -69,6 +70,41 @@ namespace EasySave.Tests
             Assert.AreNotEqual(originalContent, encryptedContent, "Le fichier a le même contenu, le chiffrement a échoué !");
 
             Assert.IsTrue(encryptedContent.Length > 0, "Le fichier chiffré est vide !");
+        }
+
+
+
+        [TestMethod]
+        public void CryptoSoft_MonoInstance_ShouldReturnBusyCodeIfAlreadyRunning()
+        {
+            string cryptoSoftPath = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "..", "..", "..", "..",
+                "CryptoSoft", "bin", "Debug", "net8.0", "win-x64", "CryptoSoft.exe"
+            );
+            if (!File.Exists(cryptoSoftPath)) cryptoSoftPath = Path.GetFullPath(cryptoSoftPath);
+
+            Assert.IsTrue(File.Exists(cryptoSoftPath), $"Impossible de trouver CryptoSoft.exe au chemin : {cryptoSoftPath}");
+
+            const string mutexName = @"Global\CryptoSoft_MonoInstance";
+            bool createdNew;
+
+            using (var simulateRunningCrypto = new System.Threading.Mutex(true, mutexName, out createdNew))
+            {
+                ProcessStartInfo startInfo = new ProcessStartInfo
+                {
+                    FileName = cryptoSoftPath,
+                    Arguments = $"\"fichier_fantome.txt\" \"CleTest\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using (Process process = Process.Start(startInfo))
+                {
+                    process.WaitForExit();
+                    Assert.AreEqual(-20, process.ExitCode, "Le second processus aurait dû se fermer avec le code d'erreur ERR_BUSY (-20) !");
+                }
+            }
         }
     }
 }
