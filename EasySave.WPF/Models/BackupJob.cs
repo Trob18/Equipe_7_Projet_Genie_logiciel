@@ -374,19 +374,6 @@ namespace EasySave.WPF.Models
 
                     if (shouldCopy)
                     {
-                        long copyTime = 0;
-                        long encryptionTime = 0;
-
-                        Stopwatch stopwatchCopy = Stopwatch.StartNew();
-                        
-                        // Chunk-based copy
-                        CopyFileInChunks(filePath, targetFilePath, totalFiles, processedCount, updateStopwatch);
-                        
-                        stopwatchCopy.Stop();
-                        copyTime = stopwatchCopy.ElapsedMilliseconds;
-
-                        if (_isStopped) break;
-
                         bool shouldEncrypt = false;
                         if (AppSettings.Instance.EncryptAll)
                         {
@@ -398,17 +385,25 @@ namespace EasySave.WPF.Models
                             shouldEncrypt = encryptedExtensions.Contains(fileExtension);
                         }
 
+                        long copyTime = 0;
+                        long encryptionTime = 0;
+                        Stopwatch stopwatchTotal = Stopwatch.StartNew();
+
                         if (shouldEncrypt && File.Exists(cryptoSoftPath))
                         {
-                            _pauseEvent.Wait();
+                            // STRATÉGIE SÉCURISÉE : Chiffrement LOCAL avant ENVOI
+                            string tempFile = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + Path.GetExtension(filePath));
                             try
                             {
-                                RunOnUI(() => ThroughputText = ResourceSettings.GetString("EncryptionInProgress") ?? "Chiffrement en cours...");
+                                // 1. Copie vers un fichier temporaire LOCAL (vitesse maximale)
+                                CopyFileInChunks(filePath, tempFile, totalFiles, processedCount, updateStopwatch);
 
+                                // 2. Chiffrement du fichier temporaire par CryptoSoft
+                                _pauseEvent.Wait();
                                 ProcessStartInfo startInfo = new ProcessStartInfo
                                 {
                                     FileName = cryptoSoftPath,
-                                    Arguments = $"\"{targetFilePath}\" \"{encryptionKey}\"",
+                                    Arguments = $"\"{tempFile}\" \"{encryptionKey}\"",
                                     UseShellExecute = false,
                                     CreateNoWindow = true
                                 };
@@ -416,21 +411,28 @@ namespace EasySave.WPF.Models
                                 using (Process process = Process.Start(startInfo))
                                 {
                                     process.WaitForExit();
-                                    if (process.ExitCode >= 0)
-                                    {
-                                        encryptionTime = process.ExitCode;
-                                    }
-                                    else
-                                    {
-                                        Debug.WriteLine($"CryptoSoft encryption failed for {targetFilePath} with exit code {process.ExitCode}");
-                                    }
+                                    encryptionTime = (process.ExitCode >= 0) ? process.ExitCode : 0;
                                 }
+
+                                // 3. ENVOI du fichier DÉJÀ CHIFFRÉ vers la destination
+                                if (File.Exists(targetFilePath)) File.Delete(targetFilePath);
+                                File.Move(tempFile, targetFilePath);
                             }
-                            catch (Exception ex)
+                            finally
                             {
-                                Debug.WriteLine($"Encryption error for {targetFilePath}: {ex.Message}");
+                                if (File.Exists(tempFile)) File.Delete(tempFile);
                             }
                         }
+                        else
+                        {
+                            // Copie directe si pas de chiffrement
+                            CopyFileInChunks(filePath, targetFilePath, totalFiles, processedCount, updateStopwatch);
+                        }
+                        
+                        stopwatchTotal.Stop();
+                        copyTime = stopwatchTotal.ElapsedMilliseconds - encryptionTime;
+
+                        if (_isStopped) break;
 
                         OnFileCopied?.Invoke(this, (filePath, targetFilePath, currentFileSize, copyTime, encryptionTime));
                     }
@@ -442,7 +444,7 @@ namespace EasySave.WPF.Models
 
                     processedCount++;
 
-                    // Temps restant maintenant géré dans CopyFileInChunks pour être basé sur le débit instantané.
+                    // Temps restant retiré selon demande utilisateur.
 
                     // Force update after each file anyway
                     OnProgressUpdate?.Invoke(this, new BackupProgressEventArgs(
@@ -500,16 +502,6 @@ namespace EasySave.WPF.Models
                         double speed = bytesSinceLastUpdate / elapsedSeconds;
 
                         ThroughputText = FormatSpeed(speed);
-                        
-                        // Calcul du temps restant basé sur le débit actuel
-                        if (speed > 0)
-                        {
-                            long remainingBytes = TotalSize - CurrentSizeProcessed;
-                            double remainingSeconds = remainingBytes / speed;
-                            TimeSpan t = TimeSpan.FromSeconds(remainingSeconds);
-                            RunOnUI(() => RemainingTimeText = t.ToString(@"hh\:mm\:ss"));
-                        }
-
                         lastSize = CurrentSizeProcessed;
 
                         OnProgressUpdate?.Invoke(this, new BackupProgressEventArgs(
