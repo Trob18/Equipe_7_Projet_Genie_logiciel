@@ -510,6 +510,57 @@
                             </Expander>
                         </Border>
 
+                        <Border Style="{StaticResource CardStyle}">
+                            <Expander Background="Transparent" BorderThickness="0">
+                                <Expander.Header>
+                                    <Grid Width="600">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="⭐" FontSize="18" Margin="0,0,15,0" VerticalAlignment="Center"/>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Labels[PriorityExtensions]}" Style="{StaticResource SettingsTitleStyle}"/>
+                                                <TextBlock Text="{Binding Labels[PriorityExtensionsDesc]}" Style="{StaticResource SettingsDescStyle}"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding PriorityExtensionsList.Count}" HorizontalAlignment="Right" Foreground="#2980B9" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                                    </Grid>
+                                </Expander.Header>
+                                <StackPanel Margin="10,20,10,10">
+                                    <Grid Margin="0,0,0,15">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Text="{Binding NewPriorityExtensionInput, UpdateSourceTrigger=PropertyChanged}" Padding="10,8" Tag="Add priority extensions (.txt, .pdf...)" BorderBrush="#D5DBDB"/>
+                                        <Button Grid.Column="1" Content="{Binding Labels[AddExtension]}" Command="{Binding AddPriorityExtensionCommand}" Style="{StaticResource ActionButtonStyle}" Margin="10,0,0,0" Width="130"/>
+                                    </Grid>
+
+                                    <Border BorderBrush="#F2F4F4" BorderThickness="1" CornerRadius="4" Background="#FAFAFA">
+                                        <StackPanel>
+                                            <TextBox Margin="1" Padding="10,5" BorderThickness="0,0,0,1" BorderBrush="#F2F4F4" Background="White" Text="{Binding PrioritySearchText, UpdateSourceTrigger=PropertyChanged}" Tag="Filter priority extensions..."/>
+                                            <ListBox ItemsSource="{Binding FilteredPriorityExtensions}" MaxHeight="150" BorderThickness="0" Background="Transparent" Padding="5">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="5,2">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Text="{Binding}" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#34495E"/>
+                                                            <Button Grid.Column="1" Content="▲" Command="{Binding DataContext.MovePriorityExtensionUpCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Foreground="#2980B9" Background="Transparent" BorderThickness="0" Cursor="Hand" FontSize="11" Margin="5,0"/>
+                                                            <Button Grid.Column="2" Content="▼" Command="{Binding DataContext.MovePriorityExtensionDownCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Foreground="#2980B9" Background="Transparent" BorderThickness="0" Cursor="Hand" FontSize="11" Margin="5,0"/>
+                                                            <Button Grid.Column="3" Content="Remove" Command="{Binding DataContext.RemovePriorityExtensionCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Foreground="#E74C3C" Background="Transparent" BorderThickness="0" Cursor="Hand" FontSize="11"/>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Expander>
+                        </Border>
+
                     </StackPanel>
                 </ScrollViewer>
             </Grid>

@@ -58,8 +58,7 @@ namespace EasySave.WPF.Config
             { "Full", "Complète" },
             { "Differential", "Différentielle" },
             { "PriorityExtensions", "Extensions prioritaires" },
-            { "PriorityExtensionsDesc", "Ces fichiers seront copiés en premier (ex: .txt, .pdf)" },
-            { "RestartWarning", "Le changement de langue nécessitera un redémarrage pour être complet." }
+            { "PriorityExtensionsDesc", "Ces fichiers seront copiés en premier (ex: .txt, .pdf)" }
         };
 
         private static readonly Dictionary<string, string> _en = new Dictionary<string, string>
@@ -115,8 +114,7 @@ namespace EasySave.WPF.Config
             { "Full", "Full" },
             { "Differential", "Differential" },
             { "PriorityExtensions", "Priority Extensions" },
-            { "PriorityExtensionsDesc", "These files will be copied first (e.g., .txt, .pdf)" },
-            { "RestartWarning", "Language change requires a restart to be fully applied." }
+            { "PriorityExtensionsDesc", "These files will be copied first (e.g., .txt, .pdf)" }
         };
 
         public static string GetString(string key)

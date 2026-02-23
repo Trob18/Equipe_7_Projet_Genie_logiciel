@@ -104,6 +104,22 @@ namespace EasySave.WPF.ViewModels
             }
         }
 
+        private string _prioritySearchText;
+        public string PrioritySearchText
+        {
+            get => _prioritySearchText;
+            set { _prioritySearchText = value; OnPropertyChanged(); OnPropertyChanged(nameof(FilteredPriorityExtensions)); }
+        }
+
+        public IEnumerable<string> FilteredPriorityExtensions
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(PrioritySearchText)) return PriorityExtensionsList;
+                return PriorityExtensionsList.Where(e => e.Contains(PrioritySearchText.ToLower()));
+            }
+        }
+
         public bool EncryptAll
         {
             get => AppSettings.Instance.EncryptAll;
@@ -224,6 +240,8 @@ namespace EasySave.WPF.ViewModels
         // --- COMMANDES POUR LES EXTENSIONS PRIORITAIRES ---
         public ICommand AddPriorityExtensionCommand { get; }
         public ICommand RemovePriorityExtensionCommand { get; }
+        public ICommand MovePriorityExtensionUpCommand { get; }
+        public ICommand MovePriorityExtensionDownCommand { get; }
         // --------------------------------------------------
 
         public string this[string key] => ResourceSettings.GetString(key);
@@ -281,6 +299,8 @@ namespace EasySave.WPF.ViewModels
             // --- INITIALISATION COMMANDES EXTENSIONS PRIORITAIRES ---
             AddPriorityExtensionCommand = new RelayCommand(param => AddPriorityExtension());
             RemovePriorityExtensionCommand = new RelayCommand(param => RemovePriorityExtension(param as string), param => param is string);
+            MovePriorityExtensionUpCommand = new RelayCommand(param => MovePriorityExtensionUp(param as string), param => param is string);
+            MovePriorityExtensionDownCommand = new RelayCommand(param => MovePriorityExtensionDown(param as string), param => param is string);
 
             StatusMessage = ResourceSettings.GetString("StatusReady");
         }
@@ -426,9 +446,33 @@ namespace EasySave.WPF.ViewModels
         {
             if (!string.IsNullOrWhiteSpace(extension))
             {
-                EncryptedExtensionsList.Remove(extension);
-                SaveEncryptedExtensions();
-                OnPropertyChanged(nameof(FilteredExtensions));
+                PriorityExtensionsList.Remove(extension);
+                SavePriorityExtensions();
+                OnPropertyChanged(nameof(FilteredPriorityExtensions));
+            }
+        }
+
+        private void MovePriorityExtensionUp(string extension)
+        {
+            if (string.IsNullOrWhiteSpace(extension)) return;
+            int index = PriorityExtensionsList.IndexOf(extension);
+            if (index > 0)
+            {
+                PriorityExtensionsList.Move(index, index - 1);
+                SavePriorityExtensions();
+                OnPropertyChanged(nameof(FilteredPriorityExtensions));
+            }
+        }
+
+        private void MovePriorityExtensionDown(string extension)
+        {
+            if (string.IsNullOrWhiteSpace(extension)) return;
+            int index = PriorityExtensionsList.IndexOf(extension);
+            if (index >= 0 && index < PriorityExtensionsList.Count - 1)
+            {
+                PriorityExtensionsList.Move(index, index + 1);
+                SavePriorityExtensions();
+                OnPropertyChanged(nameof(FilteredPriorityExtensions));
             }
         }
 
