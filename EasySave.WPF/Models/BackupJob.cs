@@ -43,8 +43,8 @@ namespace EasySave.WPF.Models
         {
             if (string.IsNullOrEmpty(path)) return "";
             var parts = path.Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length <= 2) return path;
-            return "...\\" + Path.Combine(parts[parts.Length - 2], parts[parts.Length - 1]);
+            if (parts.Length <= 3) return path;
+            return "...\\" + Path.Combine(parts[parts.Length - 3], parts[parts.Length - 2], parts[parts.Length - 1]);
         }
 
         private BackupState _state;

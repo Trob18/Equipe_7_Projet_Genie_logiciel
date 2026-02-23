@@ -249,11 +249,21 @@
                                     <StackPanel VerticalAlignment="Center">
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
                                             <TextBlock Text="📁 Source: " FontSize="10" Foreground="#95A5A6" Width="60"/>
-                                            <TextBlock Text="{Binding SourceDirectory}" FontSize="11" Foreground="#34495E" TextTrimming="CharacterEllipsis" MaxWidth="300"/>
+                                            <TextBlock FontSize="11" TextTrimming="CharacterEllipsis" MaxWidth="350">
+                                                <Hyperlink Click="OpenDirectory_Click" CommandParameter="{Binding SourceDirectory}"
+                                                           Foreground="#2980B9" TextDecorations="None">
+                                                    <TextBlock Text="{Binding ShortSourceDirectory}"/>
+                                                </Hyperlink>
+                                            </TextBlock>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="🎯 Target: " FontSize="10" Foreground="#95A5A6" Width="60"/>
-                                            <TextBlock Text="{Binding TargetDirectory}" FontSize="11" Foreground="#34495E" TextTrimming="CharacterEllipsis" MaxWidth="300"/>
+                                            <TextBlock FontSize="11" TextTrimming="CharacterEllipsis" MaxWidth="350">
+                                                <Hyperlink Click="OpenDirectory_Click" CommandParameter="{Binding TargetDirectory}"
+                                                           Foreground="#2980B9" TextDecorations="None">
+                                                    <TextBlock Text="{Binding ShortTargetDirectory}"/>
+                                                </Hyperlink>
+                                            </TextBlock>
                                         </StackPanel>
                                     </StackPanel>
                                 </DataTemplate>
