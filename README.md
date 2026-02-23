@@ -12,7 +12,7 @@ The project follows an **industrial-oriented approach**, including:
 * Anticipation of future functional evolutions.
 * Reduction of long-term development and maintenance costs.
 
----
+
 
 ## EasySave Software Objective
 
@@ -30,7 +30,7 @@ A **backup job** represents a persistent configuration including:
 * A target directory.
 * A backup type (full or differential).
 
----
+
 
 ## Project Breakdown
 
@@ -44,7 +44,7 @@ The development is organized into **three successive deliverables**:
 * Daily logs in **JSON** format.
 * Real-time state file (JSON).
 
----
+
 
 ### Deliverable 2 – EasySave v1.1 and v2.0
 
@@ -54,7 +54,7 @@ The development is organized into **three successive deliverables**:
 * File encryption via **CryptoSoft**.
 * Business software detection and management.
 
----
+
 
 ### Deliverable 3 – EasySave v3.0 (Current Version)
 
@@ -64,7 +64,7 @@ The development is organized into **three successive deliverables**:
 * Real-time job control (Play / Pause / Stop).
 * Global automatic pause when business software is launched.
 
----
+
 
 ## Installation and Startup (Docker Log Server)
 
@@ -91,7 +91,7 @@ To stop the server:
 docker-compose down
 ```
 
----
+
 
 ## Technologies Used
 
@@ -102,7 +102,7 @@ docker-compose down
 * IDE: **Visual Studio 2022+**
 * Version Control: **Git / GitHub**
 
----
+
 
 ## Repository Structure
 
@@ -113,7 +113,7 @@ docker-compose down
 * `docker-compose.yml` : Configuration for log server deployment.
 * `/README.md` : Project documentation.
 
----
+
 
 ## Project Team
 
@@ -123,7 +123,7 @@ Project carried out by a team of 3 members:
 * Developer A: Business logic and parallel backup engine.
 * Developer B: Remote logs, real-time state management, user interface.
 
----
+
 
 ## License
 
