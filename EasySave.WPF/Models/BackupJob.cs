@@ -14,6 +14,7 @@ namespace EasySave.WPF.Models
 {
     public class BackupJob : INotifyPropertyChanged
     {
+        private static readonly SemaphoreSlim _largeFileSemaphore = new SemaphoreSlim(1, 1);
         private readonly ManualResetEventSlim _pauseEvent = new ManualResetEventSlim(true);
         private bool _isStopped = false;
 
@@ -410,44 +411,63 @@ namespace EasySave.WPF.Models
                         long encryptionTime = 0;
                         Stopwatch stopwatchTotal = Stopwatch.StartNew();
 
-                        if (shouldEncrypt && File.Exists(cryptoSoftPath))
+                        bool isLargeFile = currentFileSize > (AppSettings.Instance.MaxLargeFileSizeMO * 1024 * 1024);
+                        bool semaphoreAcquired = false;
+
+                        try
                         {
-                            // STRATÉGIE SÉCURISÉE : Chiffrement LOCAL avant ENVOI
-                            string tempFile = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + Path.GetExtension(filePath));
-                            try
+                            if (isLargeFile)
                             {
-                                // 1. Copie vers un fichier temporaire LOCAL (vitesse maximale)
-                                CopyFileInChunks(filePath, tempFile, totalFiles, processedCount, updateStopwatch);
-
-                                // 2. Chiffrement du fichier temporaire par CryptoSoft
-                                _pauseEvent.Wait();
-                                ProcessStartInfo startInfo = new ProcessStartInfo
-                                {
-                                    FileName = cryptoSoftPath,
-                                    Arguments = $"\"{tempFile}\" \"{encryptionKey}\"",
-                                    UseShellExecute = false,
-                                    CreateNoWindow = true
-                                };
-
-                                using (Process process = Process.Start(startInfo))
-                                {
-                                    process.WaitForExit();
-                                    encryptionTime = (process.ExitCode >= 0) ? process.ExitCode : 0;
-                                }
-
-                                // 3. ENVOI du fichier DÉJÀ CHIFFRÉ vers la destination
-                                if (File.Exists(targetFilePath)) File.Delete(targetFilePath);
-                                File.Move(tempFile, targetFilePath);
+                                _largeFileSemaphore.Wait();
+                                semaphoreAcquired = true;
                             }
-                            finally
+
+                            if (shouldEncrypt && File.Exists(cryptoSoftPath))
                             {
-                                if (File.Exists(tempFile)) File.Delete(tempFile);
+                                // STRATÉGIE SÉCURISÉE : Chiffrement LOCAL avant ENVOI
+                                string tempFile = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + Path.GetExtension(filePath));
+                                try
+                                {
+                                    // 1. Copie vers un fichier temporaire LOCAL (vitesse maximale)
+                                    CopyFileInChunks(filePath, tempFile, totalFiles, processedCount, updateStopwatch);
+
+                                    // 2. Chiffrement du fichier temporaire par CryptoSoft
+                                    _pauseEvent.Wait();
+                                    ProcessStartInfo startInfo = new ProcessStartInfo
+                                    {
+                                        FileName = cryptoSoftPath,
+                                        Arguments = $"\"{tempFile}\" \"{encryptionKey}\"",
+                                        UseShellExecute = false,
+                                        CreateNoWindow = true
+                                    };
+
+                                    using (Process process = Process.Start(startInfo))
+                                    {
+                                        process.WaitForExit();
+                                        encryptionTime = (process.ExitCode >= 0) ? process.ExitCode : 0;
+                                    }
+
+                                    // 3. ENVOI du fichier DÉJÀ CHIFFRÉ vers la destination
+                                    if (File.Exists(targetFilePath)) File.Delete(targetFilePath);
+                                    File.Move(tempFile, targetFilePath);
+                                }
+                                finally
+                                {
+                                    if (File.Exists(tempFile)) File.Delete(tempFile);
+                                }
+                            }
+                            else
+                            {
+                                // Copie directe si pas de chiffrement
+                                CopyFileInChunks(filePath, targetFilePath, totalFiles, processedCount, updateStopwatch);
                             }
                         }
-                        else
+                        finally
                         {
-                            // Copie directe si pas de chiffrement
-                            CopyFileInChunks(filePath, targetFilePath, totalFiles, processedCount, updateStopwatch);
+                            if (semaphoreAcquired)
+                            {
+                                _largeFileSemaphore.Release();
+                            }
                         }
                         
                         stopwatchTotal.Stop();

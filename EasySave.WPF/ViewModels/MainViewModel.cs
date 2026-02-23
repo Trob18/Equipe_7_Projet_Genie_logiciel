@@ -219,6 +219,19 @@ namespace EasySave.WPF.ViewModels
             }
         }
 
+        public long MaxLargeFileSizeMO
+        {
+            get => AppSettings.Instance.MaxLargeFileSizeMO;
+            set
+            {
+                if (AppSettings.Instance.MaxLargeFileSizeMO != value)
+                {
+                    AppSettings.Instance.MaxLargeFileSizeMO = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private readonly string _jobsFilePath;
         private ILogger _logger;
 
