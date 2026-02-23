@@ -326,9 +326,9 @@
                             <TextBlock Text="{Binding SelectedJobsList.Count}" FontWeight="Bold" VerticalAlignment="Center" Foreground="#2C3E50" Margin="10,0,0,0" FontSize="16"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button Content="⏸" Command="{Binding PauseJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="40" Margin="0,0,5,0" ToolTip="Pause"/>
+                            <Button Content="❚❚" Command="{Binding PauseJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="40" Margin="0,0,5,0" ToolTip="Pause"/>
                             <Button Content="▶" Command="{Binding ResumeJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="40" Margin="0,0,5,0" ToolTip="Resume"/>
-                            <Button Content="⏹" Command="{Binding StopJobCommand}" Style="{StaticResource DangerButtonStyle}" Width="40" Margin="0,0,10,0" ToolTip="Stop"/>
+                            <Button Content="◼" Command="{Binding StopJobCommand}" Style="{StaticResource DangerButtonStyle}" Width="40" Margin="0,0,10,0" ToolTip="Stop"/>
                             <Button Content="{Binding Labels[Execute]}" Command="{Binding ExecuteJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="180"/>
                         </StackPanel>
                     </Grid>
