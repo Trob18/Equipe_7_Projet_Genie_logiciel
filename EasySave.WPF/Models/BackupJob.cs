@@ -187,13 +187,11 @@ namespace EasySave.WPF.Models
                 }
                 else
                 {
-                    // fallback (cas rare)
                     action();
                 }
             }
             catch
             {
-                // ne pas casser l’exécution si le dispatcher est indisponible
                 action();
             }
         }
@@ -267,7 +265,6 @@ namespace EasySave.WPF.Models
 
             var blockedProcessNames = GetBlockedProcessNames();
 
-            // si process métier détecté -> exception (gérée côté ViewModel)
             CheckBlockedProcesses(blockedProcessNames);
 
             if (!Directory.Exists(SourceDirectory))
@@ -315,6 +312,31 @@ namespace EasySave.WPF.Models
                                                 .Select(ext => ext.ToLower().Trim())
                                                 .ToList();
 
+
+
+            List<string> priorityExts = AppSettings.Instance.PriorityExtensions
+                .Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(ext => ext.ToLower().Trim())
+                .Select(ext => ext.StartsWith(".") ? ext : "." + ext)
+                .ToList();
+
+            var priorityFiles = new List<string>();
+            var standardFiles = new List<string>();
+
+            foreach (var file in allFiles)
+            {
+                string extension = Path.GetExtension(file).ToLower();
+                if (priorityExts.Contains(extension))
+                {
+                    priorityFiles.Add(file);
+                }
+                else
+                {
+                    standardFiles.Add(file);
+                }
+            }
+
+            allFiles = priorityFiles.Concat(standardFiles).ToArray();
             int totalFiles = allFiles.Length;
             int processedCount = 0;
 
@@ -332,7 +354,6 @@ namespace EasySave.WPF.Models
             }
             TotalSize = calculatedTotalSize;
 
-            // Revert to relative project path for CryptoSoft.exe
             string cryptoSoftPath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
                 "..", "..", "..", "..",
