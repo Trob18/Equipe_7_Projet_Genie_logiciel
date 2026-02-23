@@ -66,10 +66,11 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Tag" Value="4"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -167,11 +168,10 @@
             <!-- Header -->
             <Border Grid.Row="0" Background="White" BorderBrush="#ECF0F1" BorderThickness="0,0,0,1">
                 <Grid Margin="25,0">
-                    <TextBlock Text="{Binding StatusMessage}" Foreground="#7F8C8D" VerticalAlignment="Center" FontSize="13"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Button Content="{Binding Labels[Delete]}" Command="{Binding DeleteJobCommand}" Style="{StaticResource DangerButtonStyle}" Margin="0,0,10,0" Padding="15,5"/>
                         <Button Content="{Binding Labels[Modify]}" Command="{Binding OpenEditJobCommand}" Style="{StaticResource WarningButtonStyle}" Margin="0,0,10,0" Padding="15,5"/>
-                        <Button Content="{Binding Labels[Create]}" Command="{Binding OpenCreateJobCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,0,0"/>
+                        <Button Content="{Binding Labels[Create]}" Command="{Binding OpenCreateJobCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,0,0" Padding="15,5"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -191,12 +191,12 @@
 
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <DataGrid x:Name="JobsDataGrid" ItemsSource="{Binding BackupJobs}" SelectedItem="{Binding SelectedJob}"
                           AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended" SelectionChanged="DataGrid_SelectionChanged"
-                          BorderThickness="0" Background="Transparent" GridLinesVisibility="None" HeadersVisibility="Column" RowHeight="70">
+                          BorderThickness="0" Background="Transparent" GridLinesVisibility="None" HeadersVisibility="Column" RowHeight="70"
+                          HorizontalScrollBarVisibility="Disabled">
                     <DataGrid.Resources>
                         <!-- Fix Header Binding: Header must be a visual element or use binding proxy if RelativeSource fails in some WPF versions, 
                              but here Template is better for dynamic refresh -->
@@ -237,7 +237,7 @@
                     </DataGrid.Resources>
 
                     <DataGrid.Columns>
-                        <DataGridTemplateColumn Width="200">
+                        <DataGridTemplateColumn Width="150">
                             <DataGridTemplateColumn.Header>
                                 <TextBlock Text="{Binding DataContext.Labels[JobName], RelativeSource={RelativeSource AncestorType=Window}}"/>
                             </DataGridTemplateColumn.Header>
@@ -294,7 +294,7 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTemplateColumn Width="130">
+                        <DataGridTemplateColumn Width="110">
                             <DataGridTemplateColumn.Header>
                                 <TextBlock Text="{Binding DataContext.Labels[Transfer], RelativeSource={RelativeSource AncestorType=Window}}"/>
                             </DataGridTemplateColumn.Header>
@@ -305,7 +305,7 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTemplateColumn Width="100">
+                        <DataGridTemplateColumn Width="90">
                             <DataGridTemplateColumn.Header>
                                 <TextBlock Text="{Binding DataContext.Labels[Throughput], RelativeSource={RelativeSource AncestorType=Window}}"/>
                             </DataGridTemplateColumn.Header>
@@ -316,7 +316,7 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTemplateColumn Width="170">
+                        <DataGridTemplateColumn Width="150">
                             <DataGridTemplateColumn.Header>
                                 <TextBlock Text="{Binding DataContext.Labels[Progress], RelativeSource={RelativeSource AncestorType=Window}}"/>
                             </DataGridTemplateColumn.Header>
@@ -340,19 +340,21 @@
                     </DataGrid.Columns>
                 </DataGrid>
 
-                <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="20" Margin="0,20,0,0">
-                    <Grid>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Labels[SelectedJobs]}" VerticalAlignment="Center" Foreground="#7F8C8D"/>
-                            <TextBlock Text="{Binding SelectedJobsList.Count}" FontWeight="Bold" VerticalAlignment="Center" Foreground="#2C3E50" Margin="10,0,0,0" FontSize="16"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button Content="❚❚" Command="{Binding PauseJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="40" Margin="0,0,5,0" ToolTip="Pause"/>
-                            <Button Content="▶" Command="{Binding ResumeJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="40" Margin="0,0,5,0" ToolTip="Resume"/>
-                            <Button Content="◼" Command="{Binding StopJobCommand}" Style="{StaticResource DangerButtonStyle}" Width="40" Margin="0,0,10,0" ToolTip="Stop"/>
-                            <Button Content="{Binding Labels[Execute]}" Command="{Binding ExecuteJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="180"/>
-                        </StackPanel>
-                    </Grid>
+                <!-- Floating Control Bubble -->
+                <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,20" 
+                        Background="White" CornerRadius="30" Padding="10" BorderBrush="#ECF0F1" BorderThickness="1">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="20" Color="Black" Opacity="0.15" ShadowDepth="4" Direction="270"/>
+                    </Border.Effect>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="❚❚" Command="{Binding PauseJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="45" Height="45" Margin="5,0" ToolTip="Pause" Tag="22.5"/>
+                        <Button Content="▶" Command="{Binding ResumeJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="45" Height="45" Margin="5,0" ToolTip="Resume" Tag="22.5"/>
+                        <Button Content="◼" Command="{Binding StopJobCommand}" Style="{StaticResource DangerButtonStyle}" Width="45" Height="45" Margin="5,0" ToolTip="Stop" Tag="22.5"/>
+                        
+                        <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,8" Background="#ECF0F1"/>
+                        
+                        <Button Content="{Binding Labels[Execute]}" Command="{Binding ExecuteJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="150" Height="45" Margin="5,0" Tag="22.5" FontSize="14"/>
+                    </StackPanel>
                 </Border>
             </Grid>
 
