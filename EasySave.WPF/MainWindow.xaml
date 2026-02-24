@@ -284,12 +284,15 @@
             </Grid.RowDefinitions>
 
             <!-- Header -->
-            <Border Grid.Row="0" Background="White" BorderBrush="#ECF0F1" BorderThickness="0,0,0,1">
+            <Border Grid.Row="0" Background="#F4F7F9" BorderThickness="0">
                 <Border.Style>
                     <Style TargetType="Border">
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsChecked, ElementName=SettingsNavBtn}" Value="True">
                                 <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding DarkMode}" Value="True">
+                                <Setter Property="Background" Value="#121212"/>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
@@ -298,7 +301,7 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Button Content="{Binding Labels[Delete]}" Command="{Binding DeleteJobCommand}" Style="{StaticResource DangerButtonStyle}" Margin="0,0,10,0" Padding="15,5"/>
                         <Button Content="{Binding Labels[Modify]}" Command="{Binding OpenEditJobCommand}" Style="{StaticResource WarningButtonStyle}" Margin="0,0,10,0" Padding="15,5"/>
-                        <Button Content="{Binding Labels[Create]}" Command="{Binding OpenCreateJobCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,0,0" Padding="15,5"/>
+                        <Button Content="{Binding Labels[Create]}" Command="{Binding OpenCreateJobCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,50,0" Padding="15,5"/>
                     </StackPanel>
                 </Grid>
             </Border>
