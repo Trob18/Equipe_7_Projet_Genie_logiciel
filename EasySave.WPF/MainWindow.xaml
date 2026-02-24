@@ -193,10 +193,12 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <DataGrid x:Name="JobsDataGrid" ItemsSource="{Binding BackupJobs}" SelectedItem="{Binding SelectedJob}"
-                          AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended" SelectionChanged="DataGrid_SelectionChanged"
-                          BorderThickness="0" Background="Transparent" GridLinesVisibility="None" HeadersVisibility="Column" RowHeight="70"
-                          HorizontalScrollBarVisibility="Disabled">
+                <Border Background="#EAECEE" CornerRadius="12" Padding="5" BorderBrush="#ABB2B9" BorderThickness="1.5" MaxHeight="540" VerticalAlignment="Top">
+                    <DataGrid x:Name="JobsDataGrid" ItemsSource="{Binding BackupJobs}" SelectedItem="{Binding SelectedJob}"
+                              AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended" SelectionChanged="DataGrid_SelectionChanged"
+                              BorderThickness="0" Background="Transparent" GridLinesVisibility="None" HeadersVisibility="Column" RowHeight="70"
+                              HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"
+                              VirtualizingStackPanel.ScrollUnit="Pixel">
                     <DataGrid.Resources>
                         <!-- Fix Header Binding: Header must be a visual element or use binding proxy if RelativeSource fails in some WPF versions, 
                              but here Template is better for dynamic refresh -->
@@ -339,6 +341,7 @@
                         </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
+                </Border>
 
                 <!-- Floating Control Bubble -->
                 <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,20" 
@@ -464,7 +467,7 @@
                                     <Border BorderBrush="#F2F4F4" BorderThickness="1" CornerRadius="4" Background="#FAFAFA">
                                         <StackPanel>
                                             <TextBox Margin="1" Padding="10,5" BorderThickness="0,0,0,1" BorderBrush="#F2F4F4" Background="White" Text="{Binding ExtensionsSearchText, UpdateSourceTrigger=PropertyChanged}" Tag="Filter extensions..."/>
-                                            <ListBox ItemsSource="{Binding FilteredExtensions}" MaxHeight="150" BorderThickness="0" Background="Transparent" Padding="5">
+                                            <ListBox ItemsSource="{Binding FilteredExtensions}" MaxHeight="150" BorderThickness="0" Background="Transparent" Padding="5" VirtualizingStackPanel.ScrollUnit="Pixel">
                                                 <ListBox.ItemTemplate>
                                                     <DataTemplate>
                                                         <Grid Margin="5,2">
@@ -505,7 +508,7 @@
                                     <Border BorderBrush="#F2F4F4" BorderThickness="1" CornerRadius="4" Background="#FAFAFA">
                                         <StackPanel>
                                             <TextBox Margin="1" Padding="10,5" BorderThickness="0,0,0,1" BorderBrush="#F2F4F4" Background="White" Text="{Binding ProcessesSearchText, UpdateSourceTrigger=PropertyChanged}" Tag="Filter processes..."/>
-                                            <ListBox ItemsSource="{Binding FilteredProcesses}" MaxHeight="150" BorderThickness="0" Background="Transparent" Padding="5">
+                                            <ListBox ItemsSource="{Binding FilteredProcesses}" MaxHeight="150" BorderThickness="0" Background="Transparent" Padding="5" VirtualizingStackPanel.ScrollUnit="Pixel">
                                                 <ListBox.ItemTemplate>
                                                     <DataTemplate>
                                                         <Grid Margin="5,2">
@@ -549,7 +552,7 @@
                                     <Border BorderBrush="#F2F4F4" BorderThickness="1" CornerRadius="4" Background="#FAFAFA">
                                         <StackPanel>
                                             <TextBox Margin="1" Padding="10,5" BorderThickness="0,0,0,1" BorderBrush="#F2F4F4" Background="White" Text="{Binding PrioritySearchText, UpdateSourceTrigger=PropertyChanged}" Tag="Filter priority extensions..."/>
-                                            <ListBox ItemsSource="{Binding FilteredPriorityExtensions}" MaxHeight="150" BorderThickness="0" Background="Transparent" Padding="5">
+                                            <ListBox ItemsSource="{Binding FilteredPriorityExtensions}" MaxHeight="150" BorderThickness="0" Background="Transparent" Padding="5" VirtualizingStackPanel.ScrollUnit="Pixel">
                                                 <ListBox.ItemTemplate>
                                                     <DataTemplate>
                                                         <Grid Margin="5,2">
