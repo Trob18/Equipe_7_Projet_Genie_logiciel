@@ -1,92 +1,130 @@
-# EasySave – Logiciel de sauvegarde (Projet ProSoft)
+# EasySave â€“ Backup Software (ProSoft Project)
 
-## Contexte du projet
+## Project Context
 
-EasySave est un projet de génie logiciel réalisé pour l’entreprise fictive **ProSoft**, éditeur de logiciels.
-L’objectif est de concevoir et développer un **logiciel de sauvegarde professionnel**, robuste, évolutif et maintenable, destiné à des environnements informatiques variés (postes utilisateurs, serveurs, réseaux).
+EasySave is a software engineering project developed for the fictional company **ProSoft**, a software publisher.
+The objective is to design and develop a **professional backup software solution** that is robust, scalable, and maintainable, suitable for various IT environments (workstations, servers, networks).
 
-Le projet s’inscrit dans une logique **industrielle** avec :
-- gestion de versions (majeures / mineures),
-- documentation utilisateur et support,
-- anticipation des évolutions fonctionnelles,
-- réduction des coûts de développement futurs.
+The project follows an **industrial-oriented approach**, including:
 
-
-## Objectif du logiciel EasySave
-
-EasySave permet à un utilisateur de :
-- définir des **travaux de sauvegarde** (jobs),
-- sauvegarder des répertoires (fichiers et sous-répertoires),
-- suivre l’exécution et l’état d’avancement des sauvegardes,
-- produire des **logs exploitables** par le support technique.
-
-Un **travail de sauvegarde** représente une configuration persistante associant :
-- un nom,
-- un répertoire source,
-- un répertoire cible,
-- un type de sauvegarde (complète ou différentielle).
+* Version management (major / minor releases).
+* User and technical support documentation.
+* Anticipation of future functional evolutions.
+* Reduction of long-term development and maintenance costs.
 
 
-## Découpage du projet
 
-Le développement est organisé en **trois livrables successifs** :
+## EasySave Software Objective
 
-### Livrable 1 – EasySave v1.0
-- Application **console .NET**
-- Jusqu’à **5 travaux de sauvegarde**
-- Sauvegardes complètes et différentielles
-- Exécution via menu console ou ligne de commande
-- Logs journaliers au format **JSON**
-- Fichier d’état temps réel (JSON)
-- Librairie dédiée de logging : **EasyLog.dll**
+EasySave enables users to:
 
-### Livrable 2 – EasySave v1.1 et v2.0
-- Choix du format de logs (JSON / XML)
-- Interface graphique (WPF ou Avalonia)
-- Nombre de travaux illimité
-- Chiffrement de fichiers via CryptoSoft
-- Détection et gestion d’un logiciel métier
+* Define **backup jobs**.
+* Back up directories (files and subdirectories).
+* Monitor execution and progress status.
+* Generate **logs usable by technical support** (Local or Remote).
 
-### Livrable 3 – EasySave v3.0
-- Sauvegardes en parallèle
-- Gestion des priorités de fichiers
-- Contrôle des travaux (Play / Pause / Stop)
-- Pause automatique en cas de logiciel métier
-- Centralisation des logs via un service Docker
+A **backup job** represents a persistent configuration including:
+
+* A name.
+* A source directory.
+* A target directory.
+* A backup type (full or differential).
 
 
-## Technologies utilisées
 
-- Langage : **C#**
-- Framework : **.NET 8**
-- IDE : **Visual Studio 2022+**
-- Gestion de version : **Git / GitHub**
-- Modélisation : **UML**
+## Project Breakdown
 
+The development is organized into **three successive deliverables**:
 
-## Qualité et contraintes
+### Deliverable 1 â€“ EasySave v1.0
 
-Le projet respecte les contraintes suivantes :
-- Code en anglais
-- Lisibilité et maintenabilité
-- Architecture en couches
-- Fonctions courtes et cohérentes
+* **.NET Console** application.
+* Up to **5 backup jobs**.
+* Full and differential backups.
+* Daily logs in **JSON** format.
+* Real-time state file (JSON).
 
 
-## Organisation du dépôt
 
-- `/EasySave.App` : code source de l’application EasySave
-- `/EasySave.Log` : librairie de logging (DLL)
-- `/README.md` : description du projet
+### Deliverable 2 â€“ EasySave v1.1 and v2.0
 
-## Équipe projet
-
-Projet réalisé par une équipe de 3 personnes :
-- Chef de projet / coordination technique
-- Développeur A : logique métier et moteur de sauvegarde
-- Développeur B : logs, état temps réel, interface console
+* Log format selection (JSON / XML).
+* **WPF graphical interface (MVVM pattern)**.
+* Unlimited number of backup jobs.
+* File encryption via **CryptoSoft**.
+* Business software detection and management.
 
 
-## Licence
 
-Projet réalisé dans un cadre pédagogique.
+### Deliverable 3 â€“ EasySave v3.0 (Current Version)
+
+* **Remote Log Architecture** via Docker (TCP Server).
+* **Parallel backups** (Multithreading).
+* File priority management.
+* Real-time job control (Play / Pause / Stop).
+* Global automatic pause when business software is launched.
+
+
+
+## Installation and Startup (Docker Log Server)
+
+Version 3.0 integrates a remote logging module. To use it, the log reception server must be started via Docker.
+
+### Prerequisites:
+
+* Docker Desktop installed and running.
+
+### Startup Procedure:
+
+1. Open a terminal at the root of the project (where the `docker-compose.yml` file is located).
+2. Run the following command:
+
+   ```bash
+   docker-compose up -d --build
+   ```
+3. The server listens on port **9000**.
+4. Received logs are automatically stored in the `./logs` folder at the project root.
+
+To stop the server:
+
+```bash
+docker-compose down
+```
+
+
+
+## Technologies Used
+
+* Language: **C#**
+* Framework: **.NET 8**
+* Interface: **WPF (MVVM Pattern)**
+* Infrastructure: **Docker** (for remote logs)
+* IDE: **Visual Studio 2022+**
+* Version Control: **Git / GitHub**
+
+
+
+## Repository Structure
+
+* `/EasySave.WPF` : Main application (Graphical Interface).
+* `/EasySave.Log` : Logging library (DLL / ILogger interface).
+* `/EasySave.LogServer` : TCP Log Server (Console application for Docker).
+* `/CryptoSoft` : External encryption module (XOR-based).
+* `docker-compose.yml` : Configuration for log server deployment.
+* `/README.md` : Project documentation.
+
+
+
+## Project Team
+
+Project carried out by a team of 3 members:
+
+* Project Manager / Technical Coordinator.
+* Developer A: Business logic and parallel backup engine.
+* Developer B: Remote logs, real-time state management, user interface.
+
+
+
+## License
+
+* Project developed within an educational context.

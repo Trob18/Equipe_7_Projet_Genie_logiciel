@@ -1,4 +1,4 @@
-﻿using EasySave.WPF.Enumerations;
+using EasySave.WPF.Enumerations;
 using System;
 using System.IO;
 using System.Text.Json;
@@ -10,11 +10,38 @@ namespace EasySave.WPF.Config
     {
         private static AppSettings _instance;
         private static readonly object _lock = new object();
+        private string _logServerIP;
 
         private readonly string _configFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
 
-
         private Language _language;
+
+        private string _priorityExtensions;
+        public string PriorityExtensions
+        {
+            get => _priorityExtensions;
+            set
+            {
+                if (_priorityExtensions != value)
+                {
+                    _priorityExtensions = value;
+                    SaveSettings();
+                }
+            }
+        }
+        public string LogServerIP
+        {
+            get => _logServerIP;
+            set
+            {
+                if (_logServerIP != value)
+                {
+                    _logServerIP = value;
+                    SaveSettings();
+                }
+            }
+        }
+
         public Language Language
         {
             get => _language;
@@ -58,7 +85,7 @@ namespace EasySave.WPF.Config
                 }
             }
         }
-        
+
         private bool _encryptAll;
         public bool EncryptAll
         {
@@ -87,6 +114,20 @@ namespace EasySave.WPF.Config
             }
         }
 
+        private long _maxLargeFileSizeMO;
+        public long MaxLargeFileSizeMO
+        {
+            get => _maxLargeFileSizeMO;
+            set
+            {
+                if (_maxLargeFileSizeMO != value)
+                {
+                    _maxLargeFileSizeMO = value;
+                    SaveSettings();
+                }
+            }
+        }
+
         public static AppSettings Instance
         {
             get
@@ -104,17 +145,22 @@ namespace EasySave.WPF.Config
 
         private AppSettings()
         {
+            _priorityExtensions = "";
+            _logServerIP = "127.0.0.1";
             _language = Language.English;
             _logFormat = "json";
             _encryptedExtensions = "";
             _encryptAll = false;
-            _blockedProcesses = "notepad,mspaint";
+            _blockedProcesses = "";
+            _maxLargeFileSizeMO = 0;
             LogDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
             StateDirectory = AppDomain.CurrentDomain.BaseDirectory;
             LoadSettings();
         }
 
-
+        /// <summary>
+        /// Loads application settings from the local configuration JSON file.
+        /// </summary>
         private void LoadSettings()
         {
             if (File.Exists(_configFilePath))
@@ -127,11 +173,14 @@ namespace EasySave.WPF.Config
 
                     if (savedSettings != null)
                     {
+                        _priorityExtensions = savedSettings.PriorityExtensions ?? "";
+                        _logServerIP = savedSettings.LogServerIP ?? "127.0.0.1";
                         _language = savedSettings.Language;
                         _logFormat = savedSettings.LogFormat;
                         _encryptedExtensions = savedSettings.EncryptedExtensions;
                         _encryptAll = savedSettings.EncryptAll;
                         _blockedProcesses = savedSettings.BlockedProcesses ?? "notepad,mspaint";
+                        _maxLargeFileSizeMO = savedSettings.MaxLargeFileSizeMO != 0 ? savedSettings.MaxLargeFileSizeMO : 100;
                     }
                 }
                 catch
@@ -140,15 +189,21 @@ namespace EasySave.WPF.Config
             }
         }
 
+        /// <summary>
+        /// Persists current application settings to the local configuration JSON file.
+        /// </summary>
         private void SaveSettings()
         {
             var settingsToSave = new AppSettingsDto
             {
+                PriorityExtensions = _priorityExtensions,
+                LogServerIP = _logServerIP,
                 Language = _language,
                 LogFormat = _logFormat,
                 EncryptedExtensions = _encryptedExtensions,
                 EncryptAll = _encryptAll,
-                BlockedProcesses = _blockedProcesses
+                BlockedProcesses = _blockedProcesses,
+                MaxLargeFileSizeMO = _maxLargeFileSizeMO
             };
 
             var options = new JsonSerializerOptions { WriteIndented = true };
@@ -159,10 +214,13 @@ namespace EasySave.WPF.Config
 
     public class AppSettingsDto
     {
+        public string LogServerIP { get; set; }
         public Language Language { get; set; }
         public string LogFormat { get; set; }
         public string EncryptedExtensions { get; set; }
         public bool EncryptAll { get; set; }
         public string BlockedProcesses { get; set; }
+        public string PriorityExtensions { get; set; }
+        public long MaxLargeFileSizeMO { get; set; }
     }
 }

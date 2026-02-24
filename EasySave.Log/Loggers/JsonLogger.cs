@@ -1,4 +1,4 @@
-﻿using EasySave.Log.Interfaces;
+using EasySave.Log.Interfaces;
 using EasySave.Log.Models;
 using System;
 using System.Collections.Generic;
@@ -10,44 +10,66 @@ namespace EasySave.Log.Loggers
     public class JsonLogger : ILogger
     {
         private readonly string _logDirectory;
+        private static readonly object _lock = new object();
+        private static List<LogEntry> _currentLogs = null;
+        private static string _currentLogFile = null;
 
         public JsonLogger(string logDirectory)
         {
             _logDirectory = logDirectory;
         }
 
-        public void WriteLog(LogEntry logEntry)
+        /// <summary>
+        /// Lazy loads the log list from the daily JSON file to avoid repeated disk I/O.
+        /// </summary>
+        private void EnsureLoaded(string filePath)
         {
-            string fileName = $"{DateTime.Now:yyyy-MM-dd}.json";
-            string filePath = Path.Combine(_logDirectory, fileName);
-
-            if (!Directory.Exists(_logDirectory))
-            {
-                Directory.CreateDirectory(_logDirectory);
-            }
-
-            var logs = new List<LogEntry>();
+            if (_currentLogs != null && _currentLogFile == filePath) return;
 
             if (File.Exists(filePath))
             {
                 try
                 {
                     string jsonContent = File.ReadAllText(filePath);
-                    logs = JsonSerializer.Deserialize<List<LogEntry>>(jsonContent) ?? new List<LogEntry>();
+                    _currentLogs = JsonSerializer.Deserialize<List<LogEntry>>(jsonContent) ?? new List<LogEntry>();
                 }
                 catch
                 {
-                    logs = new List<LogEntry>();
+                    _currentLogs = new List<LogEntry>();
                 }
             }
+            else
+            {
+                _currentLogs = new List<LogEntry>();
+            }
+            _currentLogFile = filePath;
+        }
 
-            logs.Add(logEntry);
+        /// <summary>
+        /// Records a backup operation log in a daily JSON file.
+        /// 1. Ensures the target directory exists.
+        /// 2. Synchronizes access via a lock to prevent concurrent write issues.
+        /// 3. Appends the entry to the daily list and serializes the entire list back to disk.
+        /// </summary>
+        public void WriteLog(LogEntry logEntry)
+        {
+            string fileName = $"{DateTime.Now:yyyy-MM-dd}.json";
+            string filePath = Path.Combine(_logDirectory, fileName);
 
-            var options = new JsonSerializerOptions { WriteIndented = true };
+            lock (_lock)
+            {
+                if (!Directory.Exists(_logDirectory))
+                {
+                    Directory.CreateDirectory(_logDirectory);
+                }
 
-            string jsonString = JsonSerializer.Serialize(logs, options);
+                EnsureLoaded(filePath);
+                _currentLogs.Add(logEntry);
 
-            File.WriteAllText(filePath, jsonString);
+                var options = new JsonSerializerOptions { WriteIndented = true };
+                string jsonString = JsonSerializer.Serialize(_currentLogs, options);
+                File.WriteAllText(filePath, jsonString);
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using EasySave.Log;
+using EasySave.Log;
 using EasySave.Log.Interfaces;
 using EasySave.WPF.Config;
 using EasySave.WPF.Enumerations;
@@ -7,13 +7,13 @@ using EasySave.WPF.State;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using System.Diagnostics;
 
 namespace EasySave.WPF.ViewModels
 {
@@ -29,7 +29,12 @@ namespace EasySave.WPF.ViewModels
             set { _selectedJob = value; OnPropertyChanged(); }
         }
 
-        public List<BackupJob> SelectedJobsList { get; set; } = new List<BackupJob>();
+        private List<BackupJob> _selectedJobsList = new List<BackupJob>();
+        public List<BackupJob> SelectedJobsList
+        {
+            get => _selectedJobsList;
+            set { _selectedJobsList = value; OnPropertyChanged(); }
+        }
 
         public LanguageProxy Labels { get; } = new LanguageProxy();
 
@@ -49,10 +54,74 @@ namespace EasySave.WPF.ViewModels
 
         private string _newExtensionInput;
         public string NewExtensionInput { get => _newExtensionInput; set { _newExtensionInput = value; OnPropertyChanged(); } }
-        
+
+        public ObservableCollection<string> PriorityExtensionsList { get; set; }
+
+        private string _newPriorityExtensionInput;
+        public string NewPriorityExtensionInput
+        {
+            get => _newPriorityExtensionInput;
+            set { _newPriorityExtensionInput = value; OnPropertyChanged(); }
+        }
+
         public ObservableCollection<string> BlockedProcessesList { get; set; }
         private string _newProcessInput;
         public string NewProcessInput { get => _newProcessInput; set { _newProcessInput = value; OnPropertyChanged(); } }
+
+        private string _settingsSearchText;
+        public string SettingsSearchText
+        {
+            get => _settingsSearchText;
+            set { _settingsSearchText = value; OnPropertyChanged(); OnPropertyChanged(nameof(FilteredExtensions)); OnPropertyChanged(nameof(FilteredProcesses)); }
+        }
+
+        private string _extensionsSearchText;
+        public string ExtensionsSearchText
+        {
+            get => _extensionsSearchText;
+            set { _extensionsSearchText = value; OnPropertyChanged(); OnPropertyChanged(nameof(FilteredExtensions)); }
+        }
+
+        private string _processesSearchText;
+        public string ProcessesSearchText
+        {
+            get => _processesSearchText;
+            set { _processesSearchText = value; OnPropertyChanged(); OnPropertyChanged(nameof(FilteredProcesses)); }
+        }
+
+        public IEnumerable<string> FilteredExtensions
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(ExtensionsSearchText)) return EncryptedExtensionsList;
+                return EncryptedExtensionsList.Where(e => e.Contains(ExtensionsSearchText.ToLower()));
+            }
+        }
+
+        public IEnumerable<string> FilteredProcesses
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(ProcessesSearchText)) return BlockedProcessesList;
+                return BlockedProcessesList.Where(p => p.Contains(ProcessesSearchText.ToLower()));
+            }
+        }
+
+        private string _prioritySearchText;
+        public string PrioritySearchText
+        {
+            get => _prioritySearchText;
+            set { _prioritySearchText = value; OnPropertyChanged(); OnPropertyChanged(nameof(FilteredPriorityExtensions)); }
+        }
+
+        public IEnumerable<string> FilteredPriorityExtensions
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(PrioritySearchText)) return PriorityExtensionsList;
+                return PriorityExtensionsList.Where(e => e.Contains(PrioritySearchText.ToLower()));
+            }
+        }
 
         public bool EncryptAll
         {
@@ -63,9 +132,30 @@ namespace EasySave.WPF.ViewModels
                 {
                     AppSettings.Instance.EncryptAll = value;
                     OnPropertyChanged();
-                    OnPropertyChanged(nameof(EncryptAll));
+                    OnPropertyChanged(nameof(FilteredExtensions));
                 }
             }
+        }
+
+        private bool _isCreateJobVisible;
+        public bool IsCreateJobVisible
+        {
+            get => _isCreateJobVisible;
+            set { _isCreateJobVisible = value; OnPropertyChanged(); }
+        }
+
+        private bool _isEditJobVisible;
+        public bool IsEditJobVisible
+        {
+            get => _isEditJobVisible;
+            set { _isEditJobVisible = value; OnPropertyChanged(); }
+        }
+
+        private int _selectedTab;
+        public int SelectedTab
+        {
+            get => _selectedTab;
+            set { _selectedTab = value; OnPropertyChanged(); }
         }
 
         private int _progressValue;
@@ -81,7 +171,14 @@ namespace EasySave.WPF.ViewModels
             set { _restartWarningVisibility = value; OnPropertyChanged(); }
         }
 
-        public ObservableCollection<string> LogFormats { get; } = new ObservableCollection<string> { "json", "xml" };
+        public ObservableCollection<string> LogFormats { get; } = new ObservableCollection<string>
+        {
+            "json",
+            "xml",
+            "network",
+            "json+network",
+            "xml+network"
+        };
 
         public string SelectedLogFormat
         {
@@ -96,6 +193,7 @@ namespace EasySave.WPF.ViewModels
                 }
             }
         }
+
         public Language SelectedLanguage
         {
             get => AppSettings.Instance.Language;
@@ -105,15 +203,41 @@ namespace EasySave.WPF.ViewModels
                 {
                     AppSettings.Instance.Language = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(Labels));
+                    StatusMessage = ResourceSettings.GetString("StatusReady");
 
-                    if (value == _startupLanguage)
+                    foreach (var job in BackupJobs)
                     {
-                        RestartWarningVisibility = Visibility.Collapsed;
+                        job.OnPropertyChanged(nameof(job.TranslatedType));
+                        job.OnPropertyChanged(nameof(job.ProgressText));
                     }
-                    else
-                    {
-                        RestartWarningVisibility = Visibility.Visible;
-                    }
+                }
+            }
+        }
+
+        public string LogServerIP
+        {
+            get => AppSettings.Instance.LogServerIP;
+            set
+            {
+                if (AppSettings.Instance.LogServerIP != value)
+                {
+                    AppSettings.Instance.LogServerIP = value;
+                    OnPropertyChanged();
+                    UpdateLogger(false);
+                }
+            }
+        }
+
+        public long MaxLargeFileSizeMO
+        {
+            get => AppSettings.Instance.MaxLargeFileSizeMO;
+            set
+            {
+                if (AppSettings.Instance.MaxLargeFileSizeMO != value)
+                {
+                    AppSettings.Instance.MaxLargeFileSizeMO = value;
+                    OnPropertyChanged();
                 }
             }
         }
@@ -124,12 +248,26 @@ namespace EasySave.WPF.ViewModels
         public ICommand CreateJobCommand { get; }
         public ICommand DeleteJobCommand { get; }
         public ICommand ExecuteJobCommand { get; }
+        public ICommand ExecuteOrResumeJobCommand { get; }
+        public ICommand PauseJobCommand { get; }
+        public ICommand ResumeJobCommand { get; }
+        public ICommand StopJobCommand { get; }
         public ICommand AddExtensionCommand { get; }
         public ICommand RemoveExtensionCommand { get; }
         public ICommand AddProcessCommand { get; }
         public ICommand RemoveProcessCommand { get; }
         public ICommand BrowseSourceCommand { get; }
         public ICommand BrowseTargetCommand { get; }
+        public ICommand OpenCreateJobCommand { get; }
+        public ICommand CloseCreateJobCommand { get; }
+        public ICommand OpenEditJobCommand { get; }
+        public ICommand UpdateJobCommand { get; }
+        public ICommand CloseEditJobCommand { get; }
+
+        public ICommand AddPriorityExtensionCommand { get; }
+        public ICommand RemovePriorityExtensionCommand { get; }
+        public ICommand MovePriorityExtensionUpCommand { get; }
+        public ICommand MovePriorityExtensionDownCommand { get; }
 
         public string this[string key] => ResourceSettings.GetString(key);
 
@@ -138,6 +276,7 @@ namespace EasySave.WPF.ViewModels
             _startupLanguage = AppSettings.Instance.Language;
             RestartWarningVisibility = Visibility.Collapsed;
             SelectedType = BackupType.Full;
+            IsCreateJobVisible = false;
 
             _jobsFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "jobs.json");
 
@@ -147,28 +286,107 @@ namespace EasySave.WPF.ViewModels
             LoadJobs();
 
             EncryptedExtensionsList = new ObservableCollection<string>(
-                AppSettings.Instance.EncryptedExtensions
+                (AppSettings.Instance.EncryptedExtensions ?? "")
                     .Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(ext => ext.ToLower().Trim())
             );
-            
+
             BlockedProcessesList = new ObservableCollection<string>(
-                AppSettings.Instance.BlockedProcesses
+                (AppSettings.Instance.BlockedProcesses ?? "")
                     .Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(proc => proc.ToLower().Trim())
             );
 
+            PriorityExtensionsList = new ObservableCollection<string>(
+                (AppSettings.Instance.PriorityExtensions ?? "")
+                    .Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(ext => ext.ToLower().Trim())
+            );
+
             CreateJobCommand = new RelayCommand(param => CreateJob());
             DeleteJobCommand = new RelayCommand(param => DeleteJob(), param => SelectedJob != null);
-            ExecuteJobCommand = new RelayCommand(param => ExecuteJob(), param => SelectedJob != null || SelectedJobsList.Count > 0);
+            ExecuteJobCommand = new RelayCommand(param => ExecuteJob(), param => (SelectedJob != null || SelectedJobsList.Count > 0));
+            ExecuteOrResumeJobCommand = new RelayCommand(param => ExecuteOrResumeJob(), param => CanExecuteOrResumeJob());
+            PauseJobCommand = new RelayCommand(param => PauseJob(), param => CanPauseJob());
+            ResumeJobCommand = new RelayCommand(param => ResumeJob(), param => CanResumeJob());
+            StopJobCommand = new RelayCommand(param => StopJob(), param => CanStopJob());
             AddExtensionCommand = new RelayCommand(param => AddExtension());
             RemoveExtensionCommand = new RelayCommand(param => RemoveExtension(param as string), param => param is string);
+
             AddProcessCommand = new RelayCommand(param => AddProcess());
             RemoveProcessCommand = new RelayCommand(param => RemoveProcess(param as string), param => param is string);
+
             BrowseSourceCommand = new RelayCommand(param => BrowseSource());
             BrowseTargetCommand = new RelayCommand(param => BrowseTarget());
+            OpenCreateJobCommand = new RelayCommand(param => IsCreateJobVisible = true);
+            CloseCreateJobCommand = new RelayCommand(param => IsCreateJobVisible = false);
+            OpenEditJobCommand = new RelayCommand(param => OpenEditJob(), param => SelectedJobsList != null && SelectedJobsList.Count == 1);
+            UpdateJobCommand = new RelayCommand(param => UpdateJob());
+            CloseEditJobCommand = new RelayCommand(param => IsEditJobVisible = false);
+
+            AddPriorityExtensionCommand = new RelayCommand(param => AddPriorityExtension());
+            RemovePriorityExtensionCommand = new RelayCommand(param => RemovePriorityExtension(param as string), param => param is string);
+            MovePriorityExtensionUpCommand = new RelayCommand(param => MovePriorityExtensionUp(param as string), param => param is string);
+            MovePriorityExtensionDownCommand = new RelayCommand(param => MovePriorityExtensionDown(param as string), param => param is string);
 
             StatusMessage = ResourceSettings.GetString("StatusReady");
+        }
+
+        private bool CanPauseJob() => (SelectedJobsList.Any(j => j.State == BackupState.Active) || (SelectedJob?.State == BackupState.Active));
+        private bool CanResumeJob() => (SelectedJobsList.Any(j => j.State == BackupState.Paused) || (SelectedJob?.State == BackupState.Paused));
+        private bool CanStopJob() => (SelectedJobsList.Any(j => j.State == BackupState.Active || j.State == BackupState.Paused) || (SelectedJob != null && (SelectedJob.State == BackupState.Active || SelectedJob.State == BackupState.Paused)));
+        private bool CanExecuteOrResumeJob()
+        {
+            var jobs = SelectedJobsList.Count > 0 ? SelectedJobsList : (SelectedJob != null ? new List<BackupJob> { SelectedJob } : new List<BackupJob>());
+            return jobs.Any(j => j.State == BackupState.Inactive || j.State == BackupState.Paused || j.State == BackupState.Error);
+        }
+
+        /// <summary>
+        /// Logic for the multi-functional 'Execute/Resume' button.
+        /// - Resumes jobs that are currently paused.
+        /// - Starts execution for inactive or erroneous jobs.
+        /// </summary>
+        private void ExecuteOrResumeJob()
+        {
+            var jobs = SelectedJobsList.Count > 0 ? SelectedJobsList : (SelectedJob != null ? new List<BackupJob> { SelectedJob } : new List<BackupJob>());
+            
+            var jobsToExecute = jobs.Where(j => j.State == BackupState.Inactive || j.State == BackupState.Error).ToList();
+            var jobsToResume = jobs.Where(j => j.State == BackupState.Paused).ToList();
+
+            if (jobsToResume.Count > 0)
+            {
+                foreach (var job in jobsToResume) job.Resume();
+                StatusMessage = ResourceSettings.GetString("JobsResumed");
+            }
+
+            if (jobsToExecute.Count > 0)
+            {
+                ExecuteJob();
+            }
+        }
+
+        private void PauseJob()
+        {
+            if (SelectedJobsList.Count > 0) foreach (var job in SelectedJobsList) job.Pause();
+            else SelectedJob?.Pause();
+            StatusMessage = ResourceSettings.GetString("JobsPaused") ?? "Travaux mis en pause";
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void ResumeJob()
+        {
+            if (SelectedJobsList.Count > 0) foreach (var job in SelectedJobsList) job.Resume();
+            else SelectedJob?.Resume();
+            StatusMessage = ResourceSettings.GetString("JobsResumed") ?? "Travaux repris";
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void StopJob()
+        {
+            if (SelectedJobsList.Count > 0) foreach (var job in SelectedJobsList) job.Stop();
+            else SelectedJob?.Stop();
+            StatusMessage = ResourceSettings.GetString("JobsStopped") ?? "Travaux arrêtés";
+            CommandManager.InvalidateRequerySuggested();
         }
 
         private void BrowseSource()
@@ -189,16 +407,23 @@ namespace EasySave.WPF.ViewModels
             }
         }
 
+        /// <summary>
+        /// Updates the current logging implementation.
+        /// Can switch between JSON, XML, Network, or Hybrid loggers based on settings.
+        /// </summary>
         private void UpdateLogger(bool isStartup)
         {
-            _logger = LoggerCrea.CreateLogger(AppSettings.Instance.LogFormat, AppSettings.Instance.LogDirectory);
+            _logger = LoggerCrea.CreateLogger(AppSettings.Instance.LogFormat, AppSettings.Instance.LogDirectory, AppSettings.Instance.LogServerIP);
 
             if (!isStartup)
             {
-                StatusMessage = $"Logger : {AppSettings.Instance.LogFormat.ToUpper()} active.";
+                StatusMessage = $"Logger : {AppSettings.Instance.LogFormat.ToUpper()} actif sur {AppSettings.Instance.LogServerIP}.";
             }
         }
 
+        /// <summary>
+        /// Reads jobs from storage and initializes their progress data.
+        /// </summary>
         private void LoadJobs()
         {
             if (File.Exists(_jobsFilePath))
@@ -211,8 +436,8 @@ namespace EasySave.WPF.ViewModels
                     {
                         foreach (var job in jobs)
                         {
-                            job.Progress = 0;
                             job.State = BackupState.Inactive;
+                            job.InitializeJobData();
                             BackupJobs.Add(job);
                         }
                     }
@@ -235,15 +460,20 @@ namespace EasySave.WPF.ViewModels
         {
             if (!string.IsNullOrWhiteSpace(NewExtensionInput))
             {
-                string newExt = NewExtensionInput.ToLower().Trim();
-                if (!newExt.StartsWith(".")) newExt = "." + newExt;
-
-                if (!EncryptedExtensionsList.Contains(newExt))
+                var extensions = NewExtensionInput.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var ext in extensions)
                 {
-                    EncryptedExtensionsList.Add(newExt);
-                    SaveEncryptedExtensions();
-                    NewExtensionInput = "";
+                    string cleanExt = ext.ToLower().Trim();
+                    if (!cleanExt.StartsWith(".")) cleanExt = "." + cleanExt;
+
+                    if (!EncryptedExtensionsList.Contains(cleanExt))
+                    {
+                        EncryptedExtensionsList.Add(cleanExt);
+                    }
                 }
+                SaveEncryptedExtensions();
+                NewExtensionInput = "";
+                OnPropertyChanged(nameof(FilteredExtensions));
             }
         }
 
@@ -260,20 +490,80 @@ namespace EasySave.WPF.ViewModels
         {
             AppSettings.Instance.EncryptedExtensions = string.Join(", ", EncryptedExtensionsList);
         }
-        
+
+        private void AddPriorityExtension()
+        {
+            if (!string.IsNullOrWhiteSpace(NewPriorityExtensionInput))
+            {
+                string newExt = NewPriorityExtensionInput.ToLower().Trim();
+                if (!newExt.StartsWith(".")) newExt = "." + newExt;
+
+                if (!PriorityExtensionsList.Contains(newExt))
+                {
+                    PriorityExtensionsList.Add(newExt);
+                    SavePriorityExtensions();
+                    NewPriorityExtensionInput = "";
+                }
+            }
+        }
+
+        private void RemovePriorityExtension(string extension)
+        {
+            if (!string.IsNullOrWhiteSpace(extension))
+            {
+                PriorityExtensionsList.Remove(extension);
+                SavePriorityExtensions();
+                OnPropertyChanged(nameof(FilteredPriorityExtensions));
+            }
+        }
+
+        private void MovePriorityExtensionUp(string extension)
+        {
+            if (string.IsNullOrWhiteSpace(extension)) return;
+            int index = PriorityExtensionsList.IndexOf(extension);
+            if (index > 0)
+            {
+                PriorityExtensionsList.Move(index, index - 1);
+                SavePriorityExtensions();
+                OnPropertyChanged(nameof(FilteredPriorityExtensions));
+            }
+        }
+
+        private void MovePriorityExtensionDown(string extension)
+        {
+            if (string.IsNullOrWhiteSpace(extension)) return;
+            int index = PriorityExtensionsList.IndexOf(extension);
+            if (index >= 0 && index < PriorityExtensionsList.Count - 1)
+            {
+                PriorityExtensionsList.Move(index, index + 1);
+                SavePriorityExtensions();
+                OnPropertyChanged(nameof(FilteredPriorityExtensions));
+            }
+        }
+
+        private void SavePriorityExtensions()
+        {
+            AppSettings.Instance.PriorityExtensions = string.Join(", ", PriorityExtensionsList);
+        }
+
         private void AddProcess()
         {
             if (!string.IsNullOrWhiteSpace(NewProcessInput))
             {
-                string newProc = NewProcessInput.ToLower().Trim();
-                if (newProc.EndsWith(".exe")) newProc = newProc[..^4];
-
-                if (!BlockedProcessesList.Contains(newProc))
+                var processes = NewProcessInput.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var proc in processes)
                 {
-                    BlockedProcessesList.Add(newProc);
-                    SaveBlockedProcesses();
-                    NewProcessInput = "";
+                    string cleanProc = proc.ToLower().Trim();
+                    if (cleanProc.EndsWith(".exe")) cleanProc = cleanProc[..^4];
+
+                    if (!BlockedProcessesList.Contains(cleanProc))
+                    {
+                        BlockedProcessesList.Add(cleanProc);
+                    }
                 }
+                SaveBlockedProcesses();
+                NewProcessInput = "";
+                OnPropertyChanged(nameof(FilteredProcesses));
             }
         }
 
@@ -283,6 +573,7 @@ namespace EasySave.WPF.ViewModels
             {
                 BlockedProcessesList.Remove(process);
                 SaveBlockedProcesses();
+                OnPropertyChanged(nameof(FilteredProcesses));
             }
         }
 
@@ -300,49 +591,124 @@ namespace EasySave.WPF.ViewModels
             }
 
             var newJob = new BackupJob(JobName, SourcePath, TargetPath, SelectedType);
+            newJob.InitializeJobData();
             BackupJobs.Add(newJob);
             SaveJobs();
 
             StatusMessage = $"{JobName} {ResourceSettings.GetString("JobCreated")}";
             JobName = ""; SourcePath = ""; TargetPath = "";
+            IsCreateJobVisible = false;
+        }
+
+        private void OpenEditJob()
+        {
+            if (SelectedJob == null) return;
+
+            JobName = SelectedJob.Name;
+            SourcePath = SelectedJob.SourceDirectory;
+            TargetPath = SelectedJob.TargetDirectory;
+            SelectedType = SelectedJob.Type;
+            IsEditJobVisible = true;
+        }
+
+        private void UpdateJob()
+        {
+            if (SelectedJob == null) return;
+
+            if (string.IsNullOrWhiteSpace(JobName) || string.IsNullOrWhiteSpace(SourcePath) || string.IsNullOrWhiteSpace(TargetPath))
+            {
+                StatusMessage = ResourceSettings.GetString("EmptyFields");
+                return;
+            }
+
+            SelectedJob.Name = JobName;
+            SelectedJob.SourceDirectory = SourcePath;
+            SelectedJob.TargetDirectory = TargetPath;
+            SelectedJob.Type = SelectedType;
+
+            SelectedJob.OnPropertyChanged(nameof(SelectedJob.Name));
+            SelectedJob.OnPropertyChanged(nameof(SelectedJob.SourceDirectory));
+            SelectedJob.OnPropertyChanged(nameof(SelectedJob.TargetDirectory));
+            SelectedJob.OnPropertyChanged(nameof(SelectedJob.Type));
+            SelectedJob.OnPropertyChanged(nameof(SelectedJob.TranslatedType));
+            SelectedJob.OnPropertyChanged(nameof(SelectedJob.ShortSourceDirectory));
+            SelectedJob.OnPropertyChanged(nameof(SelectedJob.ShortTargetDirectory));
+
+            SelectedJob.InitializeJobData();
+            SaveJobs();
+
+            StatusMessage = $"{JobName} mis à jour.";
+            JobName = ""; SourcePath = ""; TargetPath = "";
+            IsEditJobVisible = false;
         }
 
         private void DeleteJob()
         {
-            if (SelectedJob != null)
+            var jobsToDelete = new List<BackupJob>();
+            if (SelectedJobsList.Count > 0) jobsToDelete.AddRange(SelectedJobsList);
+            else if (SelectedJob != null) jobsToDelete.Add(SelectedJob);
+
+            if (jobsToDelete.Count == 0) return;
+
+            string message;
+            if (jobsToDelete.Count == 1)
             {
-                BackupJobs.Remove(SelectedJob);
+                message = string.Format(ResourceSettings.GetString("ConfirmDeleteSingle"), jobsToDelete[0].Name);
+            }
+            else
+            {
+                message = string.Format(ResourceSettings.GetString("ConfirmDeleteMultiple"), jobsToDelete.Count);
+            }
+
+            var result = MessageBox.Show(
+                message,
+                ResourceSettings.GetString("Delete"),
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning
+            );
+
+            if (result == MessageBoxResult.Yes)
+            {
+                foreach (var job in jobsToDelete)
+                {
+                    BackupJobs.Remove(job);
+                }
                 SaveJobs();
                 StatusMessage = ResourceSettings.GetString("JobDeleted");
             }
         }
 
+        /// <summary>
+        /// Main entry point for starting one or multiple backup jobs.
+        /// 1. Prepares the list of jobs to run.
+        /// 2. Sets up progress, logging, and blocked process event handlers for each job.
+        /// 3. Launches each job in a separate Task for asynchronous execution.
+        /// 4. Handles real-time state logging (state.json) and transfer logging (logs.json).
+        /// </summary>
         private async void ExecuteJob()
         {
             var jobsToRun = new List<BackupJob>();
 
-            if (SelectedJobsList.Count > 0)
-            {
-                jobsToRun.AddRange(SelectedJobsList);
-            }
-            else if (SelectedJob != null)
-            {
-                jobsToRun.Add(SelectedJob);
-            }
+            if (SelectedJobsList.Count > 0) jobsToRun.AddRange(SelectedJobsList);
+            else if (SelectedJob != null) jobsToRun.Add(SelectedJob);
 
             if (jobsToRun.Count == 0) return;
 
             StatusMessage = string.Format(ResourceSettings.GetString("ExecutingJobs"), jobsToRun.Count);
             ProgressValue = 0;
+            CommandManager.InvalidateRequerySuggested();
+
+            var tasks = new List<Task>();
+
             foreach (var job in jobsToRun)
             {
+                // Handler for incremental progress updates and state.json synchronization
                 EventHandler<BackupProgressEventArgs> progressHandler = (sender, args) =>
                 {
-                    Application.Current.Dispatcher.Invoke(() =>
+                    Application.Current.Dispatcher.InvokeAsync(() =>
                     {
                         ProgressValue = args.Percentage;
                         StatusMessage = $"{job.Name}: {args.Percentage}%";
-
                         job.Progress = args.Percentage;
 
                         var stateLog = new StateLog
@@ -362,57 +728,63 @@ namespace EasySave.WPF.ViewModels
                     });
                 };
 
+                // Handler for logging completed file transfers
                 EventHandler<(string source, string target, long size, float time, float encryptionTime)> fileCopiedHandler = (sender, data) =>
                 {
-                    var logEntry = new Log.Models.LogEntry
+                    Task.Run(() =>
                     {
-                        Name = job.Name,
-                        SourceFile = data.source,
-                        TargetFile = data.target,
-                        FileSize = data.size,
-                        TransferTime = data.time,
-                        EncryptionTime = data.encryptionTime,
-                    };
-                    _logger.WriteLog(logEntry);
+                        var logEntry = new Log.Models.LogEntry
+                        {
+                            Name = job.Name,
+                            SourceFile = data.source,
+                            TargetFile = data.target,
+                            FileSize = data.size,
+                            TransferTime = data.time,
+                            EncryptionTime = data.encryptionTime,
+                        };
+                        _logger.WriteLog(logEntry);
+                    });
                 };
 
+                // Handler for blocked business processes (automatic pause)
+                EventHandler<string> blockedProcessHandler = (sender, processName) =>
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        string message = string.Format(ResourceSettings.GetString("ProcessBlockedMessage"), processName);
+                        StatusMessage = $"{ResourceSettings.GetString("Error")} : {message}";
+                        CommandManager.InvalidateRequerySuggested();
+
+                        MessageBox.Show(message, ResourceSettings.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
+                    });
+                };
+
+                // Subscribe to job events
                 job.OnProgressUpdate += progressHandler;
                 job.OnFileCopied += fileCopiedHandler;
+                job.OnBlockedProcessDetected += blockedProcessHandler;
 
-                await Task.Run(() =>
+                // Run the job execution in a background task
+                var task = Task.Run(() =>
                 {
                     try
                     {
                         job.Execute();
 
+                        // Final state update on completion
                         Application.Current.Dispatcher.Invoke(() =>
                         {
-                            StatusMessage = $"{job.Name} {ResourceSettings.GetString("JobFinished")}";
-                            ProgressValue = 100;
-
-                            var finalState = new StateLog
+                            job.Progress = 100;
+                            StateSettings.UpdateState(new StateLog
                             {
                                 BackupName = job.Name,
                                 Timestamp = DateTime.Now,
                                 State = "NON ACTIVE",
-                                Progression = 100
-                            };
-                            StateSettings.UpdateState(finalState);
-                        });
-                    }
-                    catch (BlockedProcessException bpex)
-                    {
-                        Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            job.State = BackupState.Paused;
-                            string message = string.Format(ResourceSettings.GetString("ProcessBlockedMessage"), bpex.ProcessName);
-                            StatusMessage = $"{ResourceSettings.GetString("Error")} : {message}";
-                            MessageBox.Show(
-                                message, 
-                                ResourceSettings.GetString("Error"), 
-                                MessageBoxButton.OK, 
-                                MessageBoxImage.Warning
-                            );
+                                Progression = 100,
+                                SourceFilePath = "Terminé",
+                                TargetFilePath = ""
+                            });
+                            CommandManager.InvalidateRequerySuggested();
                         });
                     }
                     catch (Exception ex)
@@ -421,24 +793,37 @@ namespace EasySave.WPF.ViewModels
                         {
                             StatusMessage = $"{ResourceSettings.GetString("Error")} : {ex.Message}";
                             job.State = BackupState.Error;
+                            CommandManager.InvalidateRequerySuggested();
                         });
                     }
                     finally
                     {
+                        // Clean up event subscriptions
                         job.OnProgressUpdate -= progressHandler;
                         job.OnFileCopied -= fileCopiedHandler;
+                        job.OnBlockedProcessDetected -= blockedProcessHandler;
                     }
                 });
-            }
-        }
 
+                tasks.Add(task);
+            }
+
+            // Wait for all initiated tasks to complete
+            await Task.WhenAll(tasks);
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                StatusMessage = ResourceSettings.GetString("AllJobsFinished") ?? "Tous les travaux sont terminés !";
+                ProgressValue = 100;
+            });
+
+            await Task.Delay(2000);
+            Application.Current.Dispatcher.Invoke(() => ProgressValue = 0);
+        }
 
         public class LanguageProxy
         {
-            public string this[string key]
-            {
-                get => ResourceSettings.GetString(key);
-            }
+            public string this[string key] => ResourceSettings.GetString(key);
         }
     }
 }

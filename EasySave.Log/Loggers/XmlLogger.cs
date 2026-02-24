@@ -1,4 +1,4 @@
-﻿using EasySave.Log.Interfaces;
+using EasySave.Log.Interfaces;
 using EasySave.Log.Models;
 using System;
 using System.Collections.Generic;
@@ -10,6 +10,9 @@ namespace EasySave.Log.Loggers
     public class XmlLogger : ILogger
     {
         private readonly string _logDirectory;
+        private static readonly object _lock = new object();
+        private static List<LogEntry> _currentLogs = null;
+        private static string _currentLogFile = null;
 
         public XmlLogger(string logDirectory)
         {
@@ -20,12 +23,11 @@ namespace EasySave.Log.Loggers
             }
         }
 
-        public void WriteLog(LogEntry logEntry)
+        private void EnsureLoaded(string filePath)
         {
-            string filePath = GetLogFilePath();
-            var logList = new List<LogEntry>();
-            var serializer = new XmlSerializer(typeof(List<LogEntry>));
+            if (_currentLogs != null && _currentLogFile == filePath) return;
 
+            var serializer = new XmlSerializer(typeof(List<LogEntry>));
             if (File.Exists(filePath))
             {
                 try
@@ -34,19 +36,39 @@ namespace EasySave.Log.Loggers
                     {
                         if (stream.Length > 0)
                         {
-                            logList = (List<LogEntry>)serializer.Deserialize(stream);
+                            _currentLogs = (List<LogEntry>)serializer.Deserialize(stream);
                         }
                     }
                 }
                 catch
                 {
-                    logList = new List<LogEntry>();
+                    _currentLogs = new List<LogEntry>();
                 }
             }
-            logList.Add(logEntry);
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            else
             {
-                serializer.Serialize(stream, logList);
+                _currentLogs = new List<LogEntry>();
+            }
+            _currentLogFile = filePath;
+        }
+
+        /// <summary>
+        /// Appends a log entry to the daily XML log file.
+        /// </summary>
+        public void WriteLog(LogEntry logEntry)
+        {
+            string filePath = GetLogFilePath();
+            
+            lock (_lock)
+            {
+                EnsureLoaded(filePath);
+                _currentLogs.Add(logEntry);
+
+                var serializer = new XmlSerializer(typeof(List<LogEntry>));
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    serializer.Serialize(stream, _currentLogs);
+                }
             }
         }
 
