@@ -95,6 +95,8 @@ namespace EasySave.WPF.Models
 
         public event EventHandler<(string source, string target, long size, float time, float encryptionTime)> OnFileCopied;
 
+        public event EventHandler<string> OnBlockedProcessDetected;
+
         private int _progress;
         public int Progress
         {
@@ -525,6 +527,7 @@ namespace EasySave.WPF.Models
             const int bufferSize = 64 * 1024; // 64KB
             byte[] buffer = new byte[bufferSize];
             long lastSize = CurrentSizeProcessed;
+            var blockedProcessNames = GetBlockedProcessNames();
 
             using (FileStream sourceStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read))
             using (FileStream targetStream = new FileStream(targetPath, FileMode.Create, FileAccess.Write))
@@ -534,6 +537,9 @@ namespace EasySave.WPF.Models
                 {
                     if (_isStopped) return;
                     _pauseEvent.Wait();
+
+                    // si process métier apparaît pendant la copie d'un fichier volumineux
+                    CheckBlockedProcesses(blockedProcessNames);
 
                     targetStream.Write(buffer, 0, bytesRead);
                     CurrentSizeProcessed += bytesRead;
@@ -584,7 +590,14 @@ namespace EasySave.WPF.Models
                     {
                         process.Dispose();
                     }
-                    throw new BlockedProcessException(processName);
+                    
+                    // On notifie l'UI (qui pourra afficher une MessageBox)
+                    OnBlockedProcessDetected?.Invoke(this, processName);
+
+                    // On passe en pause et on attend que l'utilisateur relance
+                    State = BackupState.Paused;
+                    _pauseEvent.Wait();
+                    return;
                 }
             }
         }

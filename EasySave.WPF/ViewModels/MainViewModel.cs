@@ -743,8 +743,26 @@ namespace EasySave.WPF.ViewModels
                     });
                 };
 
+                EventHandler<string> blockedProcessHandler = (sender, processName) =>
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        string message = string.Format(ResourceSettings.GetString("ProcessBlockedMessage"), processName);
+                        StatusMessage = $"{ResourceSettings.GetString("Error")} : {message}";
+                        CommandManager.InvalidateRequerySuggested();
+
+                        MessageBox.Show(
+                            message,
+                            ResourceSettings.GetString("Error"),
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning
+                        );
+                    });
+                };
+
                 job.OnProgressUpdate += progressHandler;
                 job.OnFileCopied += fileCopiedHandler;
+                job.OnBlockedProcessDetected += blockedProcessHandler;
 
                 var task = Task.Run(() =>
                 {
@@ -769,23 +787,6 @@ namespace EasySave.WPF.ViewModels
                             CommandManager.InvalidateRequerySuggested();
                         });
                     }
-                    catch (BlockedProcessException bpex)
-                    {
-                        Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            job.State = BackupState.Paused;
-                            string message = string.Format(ResourceSettings.GetString("ProcessBlockedMessage"), bpex.ProcessName);
-                            StatusMessage = $"{ResourceSettings.GetString("Error")} : {message}";
-                            CommandManager.InvalidateRequerySuggested();
-
-                            MessageBox.Show(
-                                message,
-                                ResourceSettings.GetString("Error"),
-                                MessageBoxButton.OK,
-                                MessageBoxImage.Warning
-                            );
-                        });
-                    }
                     catch (Exception ex)
                     {
                         Application.Current.Dispatcher.Invoke(() =>
@@ -799,6 +800,7 @@ namespace EasySave.WPF.ViewModels
                     {
                         job.OnProgressUpdate -= progressHandler;
                         job.OnFileCopied -= fileCopiedHandler;
+                        job.OnBlockedProcessDetected -= blockedProcessHandler;
                     }
                 });
 
