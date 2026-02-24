@@ -390,7 +390,8 @@ namespace EasySave.WPF.Models
                         long encryptionTime = 0;
                         Stopwatch stopwatchTotal = Stopwatch.StartNew();
 
-                        bool isLargeFile = currentFileSize > (AppSettings.Instance.MaxLargeFileSizeMO * 1024 * 1024);
+                        long thresholdMo = AppSettings.Instance.MaxLargeFileSizeMO;
+                        bool isLargeFile = thresholdMo > 0 && currentFileSize > (thresholdMo * 1024 * 1024);
                         bool semaphoreAcquired = false;
 
                         try
