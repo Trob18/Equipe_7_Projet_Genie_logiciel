@@ -128,6 +128,82 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
 
+        <!-- Modern Input Styles -->
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="BorderBrush" Value="#D5DBDB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="true">
+                                <Setter Property="BorderBrush" Value="#ABB2B9"/>
+                            </Trigger>
+                            <Trigger Property="IsFocused" Value="true">
+                                <Setter Property="BorderBrush" Value="#2980B9"/>
+                                <Setter Property="BorderThickness" Value="1.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="White"/>
+            <Style.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="6"/>
+                </Style>
+            </Style.Resources>
+        </Style>
+
+        <Style x:Key="ToggleSwitchStyle" TargetType="CheckBox">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid x:Name="Root" Background="Transparent" Cursor="Hand">
+                            <Border x:Name="Background" Width="44" Height="22" Background="#BDC3C7" CornerRadius="11">
+                                <Ellipse x:Name="Thumb" Width="18" Height="18" Fill="White" HorizontalAlignment="Left" Margin="2,0">
+                                    <Ellipse.RenderTransform>
+                                        <TranslateTransform X="0"/>
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Background" Property="Background" Value="#2ECC71"/>
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Thumb" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" To="22" Duration="0:0:0.15"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Thumb" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" To="0" Duration="0:0:0.15"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Modern ScrollBar Style -->
         <Style TargetType="{x:Type ScrollBar}">
             <Setter Property="Stylus.IsPressAndHoldEnabled" Value="false"/>
@@ -209,6 +285,15 @@
 
             <!-- Header -->
             <Border Grid.Row="0" Background="White" BorderBrush="#ECF0F1" BorderThickness="0,0,0,1">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsChecked, ElementName=SettingsNavBtn}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
                 <Grid Margin="25,0">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Button Content="{Binding Labels[Delete]}" Command="{Binding DeleteJobCommand}" Style="{StaticResource DangerButtonStyle}" Margin="0,0,10,0" Padding="15,5"/>
@@ -441,15 +526,15 @@
                     </Style>
                 </Grid.Style>
 
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,15,0">
                     <StackPanel MaxWidth="900" HorizontalAlignment="Stretch">
                         
                         <Grid Margin="0,0,0,30">
                             <TextBlock Text="{Binding Labels[TabSettings]}" FontSize="28" FontWeight="Bold" Foreground="#2C3E50"/>
                         </Grid>
 
-                        <TextBlock Text="{Binding Labels[General]}" Foreground="#95A5A6" FontWeight="Bold" FontSize="12" Margin="5,0,0,10"/>
-                        
+                        <!-- Section: Interface & Logs -->
+                        <TextBlock Text="⚙️ GÉNÉRAL &amp; LOGS" Foreground="#95A5A6" FontWeight="Bold" FontSize="11" Margin="5,0,0,10"/>
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
                                 <Grid Margin="0,0,0,20">
@@ -458,10 +543,10 @@
                                         <TextBlock Text="{Binding Labels[LangInterface]}" Style="{StaticResource SettingsTitleStyle}"/>
                                         <TextBlock Text="{Binding Labels[LangInterfaceDesc]}" Style="{StaticResource SettingsDescStyle}"/>
                                     </StackPanel>
-                                    <ComboBox Grid.Column="1" Width="180" Height="32" ItemsSource="{Binding Source={StaticResource LanguageEnum}}" SelectedItem="{Binding SelectedLanguage}"/>
+                                    <ComboBox Grid.Column="1" Width="200" ItemsSource="{Binding Source={StaticResource LanguageEnum}}" SelectedItem="{Binding SelectedLanguage}"/>
                                 </Grid>
                                 
-                                <Separator Background="#F2F4F4" Margin="0,0,0,20"/>
+                                <Separator Background="#F2F4F4" Margin="0,5,0,20"/>
 
                                 <Grid Margin="0,0,0,20">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
@@ -469,10 +554,10 @@
                                         <TextBlock Text="{Binding Labels[LogFormat]}" Style="{StaticResource SettingsTitleStyle}"/>
                                         <TextBlock Text="{Binding Labels[LogFormatDesc]}" Style="{StaticResource SettingsDescStyle}"/>
                                     </StackPanel>
-                                    <ComboBox Grid.Column="1" Width="180" Height="32" ItemsSource="{Binding LogFormats}" SelectedItem="{Binding SelectedLogFormat}"/>
+                                    <ComboBox Grid.Column="1" Width="200" ItemsSource="{Binding LogFormats}" SelectedItem="{Binding SelectedLogFormat}"/>
                                 </Grid>
 
-                                <Separator Background="#F2F4F4" Margin="0,0,0,20"/>
+                                <Separator Background="#F2F4F4" Margin="0,5,0,20"/>
 
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
@@ -480,169 +565,155 @@
                                         <TextBlock Text="{Binding Labels[LogServerIP]}" Style="{StaticResource SettingsTitleStyle}"/>
                                         <TextBlock Text="{Binding Labels[LogServerIPDesc]}" Style="{StaticResource SettingsDescStyle}"/>
                                     </StackPanel>
-                                    <TextBox Grid.Column="1" Width="180" Height="32" VerticalContentAlignment="Center" Padding="8,0" Text="{Binding LogServerIP, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <TextBox Grid.Column="1" Width="200" Text="{Binding LogServerIP, UpdateSourceTrigger=PropertyChanged}" Padding="10,8"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
 
-                        <TextBlock Text="{Binding Labels[Encryption]}" Foreground="#95A5A6" FontWeight="Bold" FontSize="12" Margin="5,15,0,10"/>
-
+                        <!-- Section: Chiffrement -->
+                        <TextBlock Text="🔒 SÉCURITÉ &amp; CHIFFREMENT" Foreground="#95A5A6" FontWeight="Bold" FontSize="11" Margin="5,15,0,10"/>
                         <Border Style="{StaticResource CardStyle}">
-                            <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                <StackPanel>
-                                    <TextBlock Text="{Binding Labels[EncryptAll]}" Style="{StaticResource SettingsTitleStyle}"/>
-                                    <TextBlock Text="{Binding Labels[EncryptAllDesc]}" Style="{StaticResource SettingsDescStyle}"/>
-                                </StackPanel>
-                                <CheckBox Grid.Column="1" IsChecked="{Binding EncryptAll}" VerticalAlignment="Center">
-                                    <CheckBox.LayoutTransform><ScaleTransform ScaleX="1.5" ScaleY="1.5"/></CheckBox.LayoutTransform>
-                                </CheckBox>
-                            </Grid>
-                        </Border>
+                            <StackPanel>
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Labels[EncryptAll]}" Style="{StaticResource SettingsTitleStyle}"/>
+                                        <TextBlock Text="{Binding Labels[EncryptAllDesc]}" Style="{StaticResource SettingsDescStyle}"/>
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="1" IsChecked="{Binding EncryptAll}" Style="{StaticResource ToggleSwitchStyle}" VerticalAlignment="Center"/>
+                                </Grid>
 
-                        <Border>
-                            <Border.Style>
-                                <Style TargetType="Border" BasedOn="{StaticResource CardStyle}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding EncryptAll}" Value="True">
-                                            <Setter Property="Opacity" Value="0.5"/>
-                                            <Setter Property="IsEnabled" Value="False"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Border.Style>
-                            <Expander Background="Transparent" BorderThickness="0">
-                                <Expander.Header>
-                                    <Grid Width="600">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="🔒" FontSize="18" Margin="0,0,15,0" VerticalAlignment="Center"/>
-                                            <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Labels[EncryptExtensions]}" Style="{StaticResource SettingsTitleStyle}"/>
-                                                <TextBlock Text="{Binding Labels[EncryptAllDesc]}" Style="{StaticResource SettingsDescStyle}"/>
+                                <Expander Background="Transparent" BorderThickness="0" Margin="0,10,0,0">
+                                    <Expander.Style>
+                                        <Style TargetType="Expander">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding EncryptAll}" Value="True">
+                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                    <Setter Property="Opacity" Value="0.5"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Expander.Style>
+                                    <Expander.Header>
+                                        <Grid Width="700">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="📜" FontSize="18" Margin="0,0,15,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding Labels[EncryptExtensions]}" VerticalAlignment="Center" Style="{StaticResource SettingsTitleStyle}"/>
                                             </StackPanel>
-                                        </StackPanel>
-                                        <TextBlock Text="{Binding EncryptedExtensionsList.Count}" HorizontalAlignment="Right" Foreground="#2980B9" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
-                                    </Grid>
-                                </Expander.Header>
-                                <StackPanel Margin="10,20,10,10">
-                                    <Grid Margin="0,0,0,15">
-                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                        <TextBox x:Name="ExtInput" Text="{Binding NewExtensionInput, UpdateSourceTrigger=PropertyChanged}" Padding="10,8" Tag="Add extensions (.txt, .pdf...)" BorderBrush="#D5DBDB"/>
-                                        <Button Grid.Column="1" Content="{Binding Labels[AddExtension]}" Command="{Binding AddExtensionCommand}" Style="{StaticResource ActionButtonStyle}" Margin="10,0,0,0" Width="130"/>
-                                    </Grid>
-
-                                    <Border BorderBrush="#F2F4F4" BorderThickness="1" CornerRadius="4" Background="#FAFAFA">
-                                        <StackPanel>
-                                            <TextBox Margin="1" Padding="10,5" BorderThickness="0,0,0,1" BorderBrush="#F2F4F4" Background="White" Text="{Binding ExtensionsSearchText, UpdateSourceTrigger=PropertyChanged}" Tag="Filter extensions..."/>
-                                            <ListBox ItemsSource="{Binding FilteredExtensions}" MaxHeight="150" BorderThickness="0" Background="Transparent" Padding="5" VirtualizingStackPanel.ScrollUnit="Pixel">
+                                            <TextBlock Text="{Binding EncryptedExtensionsList.Count}" HorizontalAlignment="Right" Foreground="#2980B9" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,30,0"/>
+                                        </Grid>
+                                    </Expander.Header>
+                                    <StackPanel Margin="10,20,10,10">
+                                        <Grid Margin="0,0,0,15">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <TextBox x:Name="ExtInput" Text="{Binding NewExtensionInput, UpdateSourceTrigger=PropertyChanged}" Tag="Ajouter .txt, .pdf..."/>
+                                            <Button Grid.Column="1" Content="{Binding Labels[AddExtension]}" Command="{Binding AddExtensionCommand}" Style="{StaticResource ActionButtonStyle}" Margin="10,0,0,0" Width="100" Height="38"/>
+                                        </Grid>
+                                        <Border BorderBrush="#F2F4F4" BorderThickness="1" CornerRadius="6" Background="#FAFAFA">
+                                            <ListBox ItemsSource="{Binding FilteredExtensions}" MaxHeight="180" BorderThickness="0" Background="Transparent" Padding="5" VirtualizingStackPanel.ScrollUnit="Pixel">
                                                 <ListBox.ItemTemplate>
                                                     <DataTemplate>
-                                                        <Grid Margin="5,2">
+                                                        <Grid Margin="5,4">
                                                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                                             <TextBlock Text="{Binding}" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#34495E"/>
-                                                            <Button Grid.Column="1" Content="Remove" Command="{Binding DataContext.RemoveExtensionCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Foreground="#E74C3C" Background="Transparent" BorderThickness="0" Cursor="Hand" FontSize="11"/>
+                                                            <Button Grid.Column="1" Content="✕" Command="{Binding DataContext.RemoveExtensionCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Foreground="#E74C3C" Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="10,2"/>
                                                         </Grid>
                                                     </DataTemplate>
                                                 </ListBox.ItemTemplate>
                                             </ListBox>
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </Expander>
+                                        </Border>
+                                    </StackPanel>
+                                </Expander>
+                            </StackPanel>
                         </Border>
 
+                        <!-- Section: Contrôle & Priorités -->
+                        <TextBlock Text="🚀 CONTRÔLE &amp; PERFORMANCE" Foreground="#95A5A6" FontWeight="Bold" FontSize="11" Margin="5,15,0,10"/>
                         <Border Style="{StaticResource CardStyle}">
-                            <Expander Background="Transparent" BorderThickness="0">
-                                <Expander.Header>
-                                    <Grid Width="600">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="🚫" FontSize="18" Margin="0,0,15,0" VerticalAlignment="Center"/>
-                                            <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Labels[BlockedProcesses]}" Style="{StaticResource SettingsTitleStyle}"/>
-                                                <TextBlock Text="{Binding Labels[BlockedProcessesDesc]}" Style="{StaticResource SettingsDescStyle}"/>
+                            <StackPanel>
+                                <Expander Background="Transparent" BorderThickness="0">
+                                    <Expander.Header>
+                                        <Grid Width="700">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="🚫" FontSize="18" Margin="0,0,15,0" VerticalAlignment="Center"/>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Labels[BlockedProcesses]}" Style="{StaticResource SettingsTitleStyle}"/>
+                                                    <TextBlock Text="{Binding Labels[BlockedProcessesDesc]}" Style="{StaticResource SettingsDescStyle}" FontSize="11"/>
+                                                </StackPanel>
                                             </StackPanel>
-                                        </StackPanel>
-                                        <TextBlock Text="{Binding BlockedProcessesList.Count}" HorizontalAlignment="Right" Foreground="#2980B9" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
-                                    </Grid>
-                                </Expander.Header>
-                                <StackPanel Margin="10,20,10,10">
-                                    <Grid Margin="0,0,0,15">
-                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                        <TextBox Text="{Binding NewProcessInput, UpdateSourceTrigger=PropertyChanged}" Padding="10,8" Tag="Add process name (e.g. calculator)..." BorderBrush="#D5DBDB"/>
-                                        <Button Grid.Column="1" Content="{Binding Labels[AddProcess]}" Command="{Binding AddProcessCommand}" Style="{StaticResource ActionButtonStyle}" Margin="10,0,0,0" Width="130"/>
-                                    </Grid>
-
-                                    <Border BorderBrush="#F2F4F4" BorderThickness="1" CornerRadius="4" Background="#FAFAFA">
-                                        <StackPanel>
-                                            <TextBox Margin="1" Padding="10,5" BorderThickness="0,0,0,1" BorderBrush="#F2F4F4" Background="White" Text="{Binding ProcessesSearchText, UpdateSourceTrigger=PropertyChanged}" Tag="Filter processes..."/>
-                                            <ListBox ItemsSource="{Binding FilteredProcesses}" MaxHeight="150" BorderThickness="0" Background="Transparent" Padding="5" VirtualizingStackPanel.ScrollUnit="Pixel">
+                                            <TextBlock Text="{Binding BlockedProcessesList.Count}" HorizontalAlignment="Right" Foreground="#2980B9" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,30,0"/>
+                                        </Grid>
+                                    </Expander.Header>
+                                    <StackPanel Margin="10,20,10,10">
+                                        <Grid Margin="0,0,0,15">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <TextBox Text="{Binding NewProcessInput, UpdateSourceTrigger=PropertyChanged}" Tag="Nom du processus..."/>
+                                            <Button Grid.Column="1" Content="{Binding Labels[AddProcess]}" Command="{Binding AddProcessCommand}" Style="{StaticResource ActionButtonStyle}" Margin="10,0,0,0" Width="100" Height="38"/>
+                                        </Grid>
+                                        <Border BorderBrush="#F2F4F4" BorderThickness="1" CornerRadius="6" Background="#FAFAFA">
+                                            <ListBox ItemsSource="{Binding FilteredProcesses}" MaxHeight="180" BorderThickness="0" Background="Transparent" Padding="5" VirtualizingStackPanel.ScrollUnit="Pixel">
                                                 <ListBox.ItemTemplate>
                                                     <DataTemplate>
-                                                        <Grid Margin="5,2">
+                                                        <Grid Margin="5,4">
                                                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                                             <TextBlock Text="{Binding}" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#34495E"/>
-                                                            <Button Grid.Column="1" Content="Remove" Command="{Binding DataContext.RemoveProcessCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Foreground="#E74C3C" Background="Transparent" BorderThickness="0" Cursor="Hand" FontSize="11"/>
+                                                            <Button Grid.Column="1" Content="✕" Command="{Binding DataContext.RemoveProcessCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Foreground="#E74C3C" Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="10,2"/>
                                                         </Grid>
                                                     </DataTemplate>
                                                 </ListBox.ItemTemplate>
                                             </ListBox>
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </Expander>
-                        </Border>
+                                        </Border>
+                                    </StackPanel>
+                                </Expander>
 
-                        <Border Style="{StaticResource CardStyle}">
-                            <Expander Background="Transparent" BorderThickness="0">
-                                <Expander.Header>
-                                    <Grid Width="600">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="⭐" FontSize="18" Margin="0,0,15,0" VerticalAlignment="Center"/>
-                                            <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Labels[PriorityExtensions]}" Style="{StaticResource SettingsTitleStyle}"/>
-                                                <TextBlock Text="{Binding Labels[PriorityExtensionsDesc]}" Style="{StaticResource SettingsDescStyle}"/>
+                                <Separator Background="#F2F4F4" Margin="0,15,0,15"/>
+
+                                <Expander Background="Transparent" BorderThickness="0">
+                                    <Expander.Header>
+                                        <Grid Width="700">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="⚡" FontSize="22" Margin="0,0,15,0" VerticalAlignment="Center" Foreground="#F1C40F"/>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Labels[PriorityExtensions]}" Style="{StaticResource SettingsTitleStyle}"/>
+                                                    <TextBlock Text="{Binding Labels[PriorityExtensionsDesc]}" Style="{StaticResource SettingsDescStyle}" FontSize="11"/>
+                                                </StackPanel>
                                             </StackPanel>
-                                        </StackPanel>
-                                        <TextBlock Text="{Binding PriorityExtensionsList.Count}" HorizontalAlignment="Right" Foreground="#2980B9" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
-                                    </Grid>
-                                </Expander.Header>
-                                <StackPanel Margin="10,20,10,10">
-                                    <Grid Margin="0,0,0,15">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBox Text="{Binding NewPriorityExtensionInput, UpdateSourceTrigger=PropertyChanged}" Padding="10,8" Tag="Add priority extensions (.txt, .pdf...)" BorderBrush="#D5DBDB"/>
-                                        <Button Grid.Column="1" Content="{Binding Labels[AddExtension]}" Command="{Binding AddPriorityExtensionCommand}" Style="{StaticResource ActionButtonStyle}" Margin="10,0,0,0" Width="130"/>
-                                    </Grid>
-
-                                    <Border BorderBrush="#F2F4F4" BorderThickness="1" CornerRadius="4" Background="#FAFAFA">
-                                        <StackPanel>
-                                            <TextBox Margin="1" Padding="10,5" BorderThickness="0,0,0,1" BorderBrush="#F2F4F4" Background="White" Text="{Binding PrioritySearchText, UpdateSourceTrigger=PropertyChanged}" Tag="Filter priority extensions..."/>
-                                            <ListBox ItemsSource="{Binding FilteredPriorityExtensions}" MaxHeight="150" BorderThickness="0" Background="Transparent" Padding="5" VirtualizingStackPanel.ScrollUnit="Pixel">
+                                            <TextBlock Text="{Binding PriorityExtensionsList.Count}" HorizontalAlignment="Right" Foreground="#2980B9" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,30,0"/>
+                                        </Grid>
+                                    </Expander.Header>
+                                    <StackPanel Margin="10,20,10,10">
+                                        <Grid Margin="0,0,0,15">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <TextBox Text="{Binding NewPriorityExtensionInput, UpdateSourceTrigger=PropertyChanged}" Tag="Extensions prioritaires..."/>
+                                            <Button Grid.Column="1" Content="{Binding Labels[AddExtension]}" Command="{Binding AddPriorityExtensionCommand}" Style="{StaticResource ActionButtonStyle}" Margin="10,0,0,0" Width="100" Height="38"/>
+                                        </Grid>
+                                        <Border BorderBrush="#F2F4F4" BorderThickness="1" CornerRadius="6" Background="#FAFAFA">
+                                            <ListBox ItemsSource="{Binding FilteredPriorityExtensions}" MaxHeight="180" BorderThickness="0" Background="Transparent" Padding="5" VirtualizingStackPanel.ScrollUnit="Pixel">
                                                 <ListBox.ItemTemplate>
                                                     <DataTemplate>
-                                                        <Grid Margin="5,2">
+                                                        <Grid Margin="5,4">
                                                             <Grid.ColumnDefinitions>
                                                                 <ColumnDefinition Width="*"/>
                                                                 <ColumnDefinition Width="Auto"/>
                                                                 <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="Auto"/>
                                                             </Grid.ColumnDefinitions>
                                                             <TextBlock Text="{Binding}" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#34495E"/>
-                                                            <Button Grid.Column="1" Content="▲" Command="{Binding DataContext.MovePriorityExtensionUpCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Foreground="#2980B9" Background="Transparent" BorderThickness="0" Cursor="Hand" FontSize="11" Margin="5,0"/>
-                                                            <Button Grid.Column="2" Content="▼" Command="{Binding DataContext.MovePriorityExtensionDownCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Foreground="#2980B9" Background="Transparent" BorderThickness="0" Cursor="Hand" FontSize="11" Margin="5,0"/>
-                                                            <Button Grid.Column="3" Content="Remove" Command="{Binding DataContext.RemovePriorityExtensionCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Foreground="#E74C3C" Background="Transparent" BorderThickness="0" Cursor="Hand" FontSize="11"/>
+                                                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                                <Button Content="↑" Command="{Binding DataContext.MovePriorityExtensionUpCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Foreground="#2980B9" Background="Transparent" BorderThickness="0" Width="30" FontSize="14" Cursor="Hand"/>
+                                                                <Button Content="↓" Command="{Binding DataContext.MovePriorityExtensionDownCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Foreground="#2980B9" Background="Transparent" BorderThickness="0" Width="30" FontSize="14" Cursor="Hand"/>
+                                                            </StackPanel>
+                                                            <Button Grid.Column="2" Content="✕" Command="{Binding DataContext.RemovePriorityExtensionCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Foreground="#E74C3C" Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="10,2"/>
                                                         </Grid>
                                                     </DataTemplate>
                                                 </ListBox.ItemTemplate>
                                             </ListBox>
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </Expander>
+                                        </Border>
+                                    </StackPanel>
+                                </Expander>
+                            </StackPanel>
                         </Border>
 
+                        <Border Height="50"/>
                     </StackPanel>
                 </ScrollViewer>
             </Grid>

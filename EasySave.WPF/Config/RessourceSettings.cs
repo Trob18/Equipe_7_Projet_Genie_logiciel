@@ -8,8 +8,8 @@ namespace EasySave.WPF.Config
         private static readonly Dictionary<string, string> _fr = new Dictionary<string, string>
         {
             { "JobName", "Nom du travail" },
-            { "TabHome", "Accueil" },
-            { "TabSettings", "Configuration" },
+            { "TabHome", "Tableau de bord" },
+            { "TabSettings", "Paramètres" },
             { "TitleSettings", "Paramètres Généraux" },
             { "State", "État" },
             { "SourcePath", "Dossier Source" },
@@ -102,7 +102,7 @@ namespace EasySave.WPF.Config
         private static readonly Dictionary<string, string> _en = new Dictionary<string, string>
         {
             { "JobName", "Job Name" },
-            { "TabHome", "Home" },
+            { "TabHome", "Dashboard" },
             { "TabSettings", "Settings" },
             { "TitleSettings", "General Settings" },
             { "State", "State" },
