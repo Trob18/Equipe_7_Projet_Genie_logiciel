@@ -310,7 +310,7 @@
                                 <DataTemplate>
                                     <StackPanel VerticalAlignment="Center">
                                         <TextBlock Text="{Binding Name}" FontWeight="Bold" Foreground="#2C3E50" FontSize="14"/>
-                                        <TextBlock Text="{Binding State}" FontSize="10" Foreground="#2980B9" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding TranslatedState}" FontSize="10" Foreground="#2980B9" FontWeight="SemiBold"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
@@ -354,33 +354,9 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTemplateColumn Width="100">
-                            <DataGridTemplateColumn.Header>
-                                <TextBlock Text="{Binding DataContext.Labels[Type], RelativeSource={RelativeSource AncestorType=Window}}"/>
-                            </DataGridTemplateColumn.Header>
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Border Background="#EBEDEF" CornerRadius="4" Padding="8,4" HorizontalAlignment="Left">
-                                        <TextBlock Text="{Binding TranslatedType}" FontSize="11" FontWeight="SemiBold" Foreground="#5D6D7E"/>
-                                    </Border>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-
-                        <DataGridTemplateColumn Width="110">
-                            <DataGridTemplateColumn.Header>
-                                <TextBlock Text="{Binding DataContext.Labels[Transfer], RelativeSource={RelativeSource AncestorType=Window}}"/>
-                            </DataGridTemplateColumn.Header>
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding SizeProgressText}" VerticalAlignment="Center" FontSize="11" Foreground="#5D6D7E" HorizontalAlignment="Center"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-
                         <DataGridTemplateColumn Width="90">
                             <DataGridTemplateColumn.Header>
-                                <TextBlock Text="{Binding DataContext.Labels[Throughput], RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                <TextBlock Text="{Binding DataContext.Labels[Throughput], RelativeSource={RelativeSource AncestorType=Window}}" HorizontalAlignment="Center"/>
                             </DataGridTemplateColumn.Header>
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -389,24 +365,48 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTemplateColumn Width="150">
+                        <DataGridTemplateColumn Width="140">
                             <DataGridTemplateColumn.Header>
-                                <TextBlock Text="{Binding DataContext.Labels[Progress], RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                <TextBlock Text="{Binding DataContext.Labels[Transfer], RelativeSource={RelativeSource AncestorType=Window}}" HorizontalAlignment="Center"/>
                             </DataGridTemplateColumn.Header>
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Grid VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding SizeProgressText}" VerticalAlignment="Center" FontSize="11" Foreground="#5D6D7E" HorizontalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="150">
+                            <DataGridTemplateColumn.Header>
+                                <TextBlock Text="{Binding DataContext.Labels[Progress], RelativeSource={RelativeSource AncestorType=Window}}" HorizontalAlignment="Center"/>
+                            </DataGridTemplateColumn.Header>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Grid VerticalAlignment="Center" Margin="10,0">
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
-                                        <TextBlock Text="{Binding ProgressText}" FontSize="10" Foreground="#7F8C8D" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding ProgressText}" FontSize="10" Foreground="#7F8C8D" Margin="0,0,0,5" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                                         <ProgressBar Value="{Binding Progress}" Grid.Row="1" Height="8" Background="#ECF0F1" BorderThickness="0">
                                             <ProgressBar.Foreground>
                                                 <SolidColorBrush Color="#2980B9"/>
                                             </ProgressBar.Foreground>
                                         </ProgressBar>
                                     </Grid>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="100">
+                            <DataGridTemplateColumn.Header>
+                                <TextBlock Text="{Binding DataContext.Labels[Type], RelativeSource={RelativeSource AncestorType=Window}}" HorizontalAlignment="Center"/>
+                            </DataGridTemplateColumn.Header>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border Background="#EBEDEF" CornerRadius="4" Padding="8,4" HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding TranslatedType}" FontSize="11" FontWeight="SemiBold" Foreground="#5D6D7E"/>
+                                    </Border>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>

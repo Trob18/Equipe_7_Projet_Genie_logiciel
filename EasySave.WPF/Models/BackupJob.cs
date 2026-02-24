@@ -61,8 +61,11 @@ namespace EasySave.WPF.Models
 
                 OnPropertyChanged(); 
                 OnPropertyChanged(nameof(ProgressText)); 
+                OnPropertyChanged(nameof(TranslatedState));
             }
         }
+
+        public string TranslatedState => ResourceSettings.GetString(State.ToString());
 
         private string _remainingTimeText;
         public string RemainingTimeText
