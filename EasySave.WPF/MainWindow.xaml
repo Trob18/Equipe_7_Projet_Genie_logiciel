@@ -324,7 +324,11 @@
                                 <DataTemplate>
                                     <StackPanel VerticalAlignment="Center">
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                                            <TextBlock Text="📁 Source: " FontSize="10" Foreground="#95A5A6" Width="60"/>
+                                            <StackPanel Orientation="Horizontal" Width="100">
+                                                <TextBlock Text="📁 " FontSize="10" Foreground="#95A5A6"/>
+                                                <TextBlock Text="{Binding DataContext.Labels[SourcePath], RelativeSource={RelativeSource AncestorType=Window}}" FontSize="10" Foreground="#95A5A6"/>
+                                                <TextBlock Text=":" FontSize="10" Foreground="#95A5A6"/>
+                                            </StackPanel>
                                             <TextBlock FontSize="11" TextTrimming="CharacterEllipsis" MaxWidth="350">
                                                 <Hyperlink Click="OpenDirectory_Click" CommandParameter="{Binding SourceDirectory}"
                                                            Foreground="#2980B9" TextDecorations="None">
@@ -333,7 +337,11 @@
                                             </TextBlock>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="🎯 Target: " FontSize="10" Foreground="#95A5A6" Width="60"/>
+                                            <StackPanel Orientation="Horizontal" Width="100">
+                                                <TextBlock Text="🎯 " FontSize="10" Foreground="#95A5A6"/>
+                                                <TextBlock Text="{Binding DataContext.Labels[TargetPath], RelativeSource={RelativeSource AncestorType=Window}}" FontSize="10" Foreground="#95A5A6"/>
+                                                <TextBlock Text=":" FontSize="10" Foreground="#95A5A6"/>
+                                            </StackPanel>
                                             <TextBlock FontSize="11" TextTrimming="CharacterEllipsis" MaxWidth="350">
                                                 <Hyperlink Click="OpenDirectory_Click" CommandParameter="{Binding TargetDirectory}"
                                                            Foreground="#2980B9" TextDecorations="None">
