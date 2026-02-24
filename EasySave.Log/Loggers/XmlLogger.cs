@@ -1,4 +1,4 @@
-﻿using EasySave.Log.Interfaces;
+using EasySave.Log.Interfaces;
 using EasySave.Log.Models;
 using System;
 using System.Collections.Generic;
@@ -52,6 +52,9 @@ namespace EasySave.Log.Loggers
             _currentLogFile = filePath;
         }
 
+        /// <summary>
+        /// Appends a log entry to the daily XML log file.
+        /// </summary>
         public void WriteLog(LogEntry logEntry)
         {
             string filePath = GetLogFilePath();

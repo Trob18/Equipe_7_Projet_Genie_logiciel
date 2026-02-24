@@ -1,4 +1,4 @@
-﻿using EasySave.WPF.Enumerations;
+using EasySave.WPF.Enumerations;
 using System;
 using System.IO;
 using System.Text.Json;
@@ -151,13 +151,16 @@ namespace EasySave.WPF.Config
             _logFormat = "json";
             _encryptedExtensions = "";
             _encryptAll = false;
-            _blockedProcesses = "notepad,mspaint";
-            _maxLargeFileSizeMO = 100; // Default 100 MO
+            _blockedProcesses = "";
+            _maxLargeFileSizeMO = 0;
             LogDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
             StateDirectory = AppDomain.CurrentDomain.BaseDirectory;
             LoadSettings();
         }
 
+        /// <summary>
+        /// Loads application settings from the local configuration JSON file.
+        /// </summary>
         private void LoadSettings()
         {
             if (File.Exists(_configFilePath))
@@ -186,6 +189,9 @@ namespace EasySave.WPF.Config
             }
         }
 
+        /// <summary>
+        /// Persists current application settings to the local configuration JSON file.
+        /// </summary>
         private void SaveSettings()
         {
             var settingsToSave = new AppSettingsDto

@@ -1,4 +1,4 @@
-﻿using EasySave.Log.Interfaces;
+using EasySave.Log.Interfaces;
 using EasySave.Log.Models;
 using System;
 using System.Collections.Generic;
@@ -19,6 +19,9 @@ namespace EasySave.Log.Loggers
             _logDirectory = logDirectory;
         }
 
+        /// <summary>
+        /// Lazy loads the log list from the daily JSON file to avoid repeated disk I/O.
+        /// </summary>
         private void EnsureLoaded(string filePath)
         {
             if (_currentLogs != null && _currentLogFile == filePath) return;
@@ -42,6 +45,12 @@ namespace EasySave.Log.Loggers
             _currentLogFile = filePath;
         }
 
+        /// <summary>
+        /// Records a backup operation log in a daily JSON file.
+        /// 1. Ensures the target directory exists.
+        /// 2. Synchronizes access via a lock to prevent concurrent write issues.
+        /// 3. Appends the entry to the daily list and serializes the entire list back to disk.
+        /// </summary>
         public void WriteLog(LogEntry logEntry)
         {
             string fileName = $"{DateTime.Now:yyyy-MM-dd}.json";
