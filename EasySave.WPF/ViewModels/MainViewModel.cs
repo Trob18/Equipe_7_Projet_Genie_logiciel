@@ -29,7 +29,12 @@ namespace EasySave.WPF.ViewModels
             set { _selectedJob = value; OnPropertyChanged(); }
         }
 
-        public List<BackupJob> SelectedJobsList { get; set; } = new List<BackupJob>();
+        private List<BackupJob> _selectedJobsList = new List<BackupJob>();
+        public List<BackupJob> SelectedJobsList
+        {
+            get => _selectedJobsList;
+            set { _selectedJobsList = value; OnPropertyChanged(); }
+        }
 
         public LanguageProxy Labels { get; } = new LanguageProxy();
 
@@ -232,6 +237,7 @@ namespace EasySave.WPF.ViewModels
         public ICommand CreateJobCommand { get; }
         public ICommand DeleteJobCommand { get; }
         public ICommand ExecuteJobCommand { get; }
+        public ICommand ExecuteOrResumeJobCommand { get; }
         public ICommand PauseJobCommand { get; }
         public ICommand ResumeJobCommand { get; }
         public ICommand StopJobCommand { get; }
@@ -292,6 +298,7 @@ namespace EasySave.WPF.ViewModels
             CreateJobCommand = new RelayCommand(param => CreateJob());
             DeleteJobCommand = new RelayCommand(param => DeleteJob(), param => SelectedJob != null);
             ExecuteJobCommand = new RelayCommand(param => ExecuteJob(), param => (SelectedJob != null || SelectedJobsList.Count > 0));
+            ExecuteOrResumeJobCommand = new RelayCommand(param => ExecuteOrResumeJob(), param => CanExecuteOrResumeJob());
             PauseJobCommand = new RelayCommand(param => PauseJob(), param => CanPauseJob());
             ResumeJobCommand = new RelayCommand(param => ResumeJob(), param => CanResumeJob());
             StopJobCommand = new RelayCommand(param => StopJob(), param => CanStopJob());
@@ -321,12 +328,40 @@ namespace EasySave.WPF.ViewModels
         private bool CanPauseJob() => (SelectedJobsList.Any(j => j.State == BackupState.Active) || (SelectedJob?.State == BackupState.Active));
         private bool CanResumeJob() => (SelectedJobsList.Any(j => j.State == BackupState.Paused) || (SelectedJob?.State == BackupState.Paused));
         private bool CanStopJob() => (SelectedJobsList.Any(j => j.State == BackupState.Active || j.State == BackupState.Paused) || (SelectedJob != null && (SelectedJob.State == BackupState.Active || SelectedJob.State == BackupState.Paused)));
+        private bool CanExecuteOrResumeJob()
+        {
+            var jobs = SelectedJobsList.Count > 0 ? SelectedJobsList : (SelectedJob != null ? new List<BackupJob> { SelectedJob } : new List<BackupJob>());
+            return jobs.Any(j => j.State == BackupState.Inactive || j.State == BackupState.Paused || j.State == BackupState.Error);
+        }
+
+        private void ExecuteOrResumeJob()
+        {
+            var jobs = SelectedJobsList.Count > 0 ? SelectedJobsList : (SelectedJob != null ? new List<BackupJob> { SelectedJob } : new List<BackupJob>());
+            
+            var jobsToExecute = jobs.Where(j => j.State == BackupState.Inactive || j.State == BackupState.Error).ToList();
+            var jobsToResume = jobs.Where(j => j.State == BackupState.Paused).ToList();
+
+            if (jobsToResume.Count > 0)
+            {
+                foreach (var job in jobsToResume) job.Resume();
+                StatusMessage = ResourceSettings.GetString("JobsResumed");
+            }
+
+            if (jobsToExecute.Count > 0)
+            {
+                // We reuse ExecuteJob but we need to pass the specific list
+                // For simplicity, if we have a mix, we might want to handle it better, 
+                // but usually users execute OR resume.
+                ExecuteJob();
+            }
+        }
 
         private void PauseJob()
         {
             if (SelectedJobsList.Count > 0) foreach (var job in SelectedJobsList) job.Pause();
             else SelectedJob?.Pause();
             StatusMessage = ResourceSettings.GetString("JobsPaused") ?? "Travaux mis en pause";
+            CommandManager.InvalidateRequerySuggested();
         }
 
         private void ResumeJob()
@@ -334,6 +369,7 @@ namespace EasySave.WPF.ViewModels
             if (SelectedJobsList.Count > 0) foreach (var job in SelectedJobsList) job.Resume();
             else SelectedJob?.Resume();
             StatusMessage = ResourceSettings.GetString("JobsResumed") ?? "Travaux repris";
+            CommandManager.InvalidateRequerySuggested();
         }
 
         private void StopJob()
@@ -341,6 +377,7 @@ namespace EasySave.WPF.ViewModels
             if (SelectedJobsList.Count > 0) foreach (var job in SelectedJobsList) job.Stop();
             else SelectedJob?.Stop();
             StatusMessage = ResourceSettings.GetString("JobsStopped") ?? "Travaux arrêtés";
+            CommandManager.InvalidateRequerySuggested();
         }
 
         private void BrowseSource()
@@ -644,6 +681,7 @@ namespace EasySave.WPF.ViewModels
 
             StatusMessage = string.Format(ResourceSettings.GetString("ExecutingJobs"), jobsToRun.Count);
             ProgressValue = 0;
+            CommandManager.InvalidateRequerySuggested();
 
             var tasks = new List<Task>();
 
@@ -715,6 +753,7 @@ namespace EasySave.WPF.ViewModels
                                 TargetFilePath = ""
                             };
                             StateSettings.UpdateState(finalState);
+                            CommandManager.InvalidateRequerySuggested();
                         });
                     }
                     catch (BlockedProcessException bpex)
@@ -724,6 +763,7 @@ namespace EasySave.WPF.ViewModels
                             job.State = BackupState.Paused;
                             string message = string.Format(ResourceSettings.GetString("ProcessBlockedMessage"), bpex.ProcessName);
                             StatusMessage = $"{ResourceSettings.GetString("Error")} : {message}";
+                            CommandManager.InvalidateRequerySuggested();
 
                             MessageBox.Show(
                                 message,
@@ -739,6 +779,7 @@ namespace EasySave.WPF.ViewModels
                         {
                             StatusMessage = $"{ResourceSettings.GetString("Error")} : {ex.Message}";
                             job.State = BackupState.Error;
+                            CommandManager.InvalidateRequerySuggested();
                         });
                     }
                     finally

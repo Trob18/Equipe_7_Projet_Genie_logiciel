@@ -421,13 +421,9 @@
                         <DropShadowEffect BlurRadius="20" Color="Black" Opacity="0.15" ShadowDepth="4" Direction="270"/>
                     </Border.Effect>
                     <StackPanel Orientation="Horizontal">
+                        <Button Content="▶" Command="{Binding ExecuteOrResumeJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="150" Height="45" Margin="5,0" Tag="22.5" FontSize="14"/>
                         <Button Content="❚❚" Command="{Binding PauseJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="45" Height="45" Margin="5,0" ToolTip="Pause" Tag="22.5"/>
-                        <Button Content="▶" Command="{Binding ResumeJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="45" Height="45" Margin="5,0" ToolTip="Resume" Tag="22.5"/>
                         <Button Content="◼" Command="{Binding StopJobCommand}" Style="{StaticResource DangerButtonStyle}" Width="45" Height="45" Margin="5,0" ToolTip="Stop" Tag="22.5"/>
-                        
-                        <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,8" Background="#ECF0F1"/>
-                        
-                        <Button Content="{Binding Labels[Execute]}" Command="{Binding ExecuteJobCommand}" Style="{StaticResource ActionButtonStyle}" Width="150" Height="45" Margin="5,0" Tag="22.5" FontSize="14"/>
                     </StackPanel>
                 </Border>
             </Grid>
