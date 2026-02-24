@@ -8,6 +8,7 @@
         xmlns:enums="clr-namespace:EasySave.WPF.Enumerations"
         mc:Ignorable="d"
         Title="EasySave v3.0" Height="750" Width="1050"
+        Icon="app_icon.ico"
         WindowState="Maximized"
         WindowStartupLocation="CenterScreen"
         Background="#F4F7F9">
@@ -262,7 +263,7 @@
             </Grid.RowDefinitions>
 
             <StackPanel Grid.Row="0" Margin="25,40,25,40" Orientation="Horizontal">
-                <TextBlock Text="🛡️" FontSize="28" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Text="🛡️" Foreground="White" FontSize="28" VerticalAlignment="Center" Margin="0,0,10,0"/>
                 <TextBlock Text="EasySave" Foreground="White" FontSize="22" FontWeight="Bold" VerticalAlignment="Center"/>
             </StackPanel>
 
