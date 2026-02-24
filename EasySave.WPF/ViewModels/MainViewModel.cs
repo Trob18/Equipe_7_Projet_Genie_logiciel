@@ -1,4 +1,4 @@
-﻿using EasySave.Log;
+using EasySave.Log;
 using EasySave.Log.Interfaces;
 using EasySave.WPF.Config;
 using EasySave.WPF.Enumerations;
@@ -55,7 +55,6 @@ namespace EasySave.WPF.ViewModels
         private string _newExtensionInput;
         public string NewExtensionInput { get => _newExtensionInput; set { _newExtensionInput = value; OnPropertyChanged(); } }
 
-        // --- DEBUT : VARIABLES POUR LES EXTENSIONS PRIORITAIRES ---
         public ObservableCollection<string> PriorityExtensionsList { get; set; }
 
         private string _newPriorityExtensionInput;
@@ -64,7 +63,6 @@ namespace EasySave.WPF.ViewModels
             get => _newPriorityExtensionInput;
             set { _newPriorityExtensionInput = value; OnPropertyChanged(); }
         }
-        // --- FIN ---
 
         public ObservableCollection<string> BlockedProcessesList { get; set; }
         private string _newProcessInput;
@@ -266,12 +264,10 @@ namespace EasySave.WPF.ViewModels
         public ICommand UpdateJobCommand { get; }
         public ICommand CloseEditJobCommand { get; }
 
-        // --- COMMANDES POUR LES EXTENSIONS PRIORITAIRES ---
         public ICommand AddPriorityExtensionCommand { get; }
         public ICommand RemovePriorityExtensionCommand { get; }
         public ICommand MovePriorityExtensionUpCommand { get; }
         public ICommand MovePriorityExtensionDownCommand { get; }
-        // --------------------------------------------------
 
         public string this[string key] => ResourceSettings.GetString(key);
 
@@ -301,7 +297,6 @@ namespace EasySave.WPF.ViewModels
                     .Select(proc => proc.ToLower().Trim())
             );
 
-            // --- INITIALISATION LISTE EXTENSIONS PRIORITAIRES ---
             PriorityExtensionsList = new ObservableCollection<string>(
                 (AppSettings.Instance.PriorityExtensions ?? "")
                     .Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
@@ -329,7 +324,6 @@ namespace EasySave.WPF.ViewModels
             UpdateJobCommand = new RelayCommand(param => UpdateJob());
             CloseEditJobCommand = new RelayCommand(param => IsEditJobVisible = false);
 
-            // --- INITIALISATION COMMANDES EXTENSIONS PRIORITAIRES ---
             AddPriorityExtensionCommand = new RelayCommand(param => AddPriorityExtension());
             RemovePriorityExtensionCommand = new RelayCommand(param => RemovePriorityExtension(param as string), param => param is string);
             MovePriorityExtensionUpCommand = new RelayCommand(param => MovePriorityExtensionUp(param as string), param => param is string);
@@ -347,6 +341,11 @@ namespace EasySave.WPF.ViewModels
             return jobs.Any(j => j.State == BackupState.Inactive || j.State == BackupState.Paused || j.State == BackupState.Error);
         }
 
+        /// <summary>
+        /// Logic for the multi-functional 'Execute/Resume' button.
+        /// - Resumes jobs that are currently paused.
+        /// - Starts execution for inactive or erroneous jobs.
+        /// </summary>
         private void ExecuteOrResumeJob()
         {
             var jobs = SelectedJobsList.Count > 0 ? SelectedJobsList : (SelectedJob != null ? new List<BackupJob> { SelectedJob } : new List<BackupJob>());
@@ -362,9 +361,6 @@ namespace EasySave.WPF.ViewModels
 
             if (jobsToExecute.Count > 0)
             {
-                // We reuse ExecuteJob but we need to pass the specific list
-                // For simplicity, if we have a mix, we might want to handle it better, 
-                // but usually users execute OR resume.
                 ExecuteJob();
             }
         }
@@ -411,6 +407,10 @@ namespace EasySave.WPF.ViewModels
             }
         }
 
+        /// <summary>
+        /// Updates the current logging implementation.
+        /// Can switch between JSON, XML, Network, or Hybrid loggers based on settings.
+        /// </summary>
         private void UpdateLogger(bool isStartup)
         {
             _logger = LoggerCrea.CreateLogger(AppSettings.Instance.LogFormat, AppSettings.Instance.LogDirectory, AppSettings.Instance.LogServerIP);
@@ -421,6 +421,9 @@ namespace EasySave.WPF.ViewModels
             }
         }
 
+        /// <summary>
+        /// Reads jobs from storage and initializes their progress data.
+        /// </summary>
         private void LoadJobs()
         {
             if (File.Exists(_jobsFilePath))
@@ -488,7 +491,6 @@ namespace EasySave.WPF.ViewModels
             AppSettings.Instance.EncryptedExtensions = string.Join(", ", EncryptedExtensionsList);
         }
 
-        // --- METHODES POUR LES EXTENSIONS PRIORITAIRES ---
         private void AddPriorityExtension()
         {
             if (!string.IsNullOrWhiteSpace(NewPriorityExtensionInput))
@@ -543,7 +545,6 @@ namespace EasySave.WPF.ViewModels
         {
             AppSettings.Instance.PriorityExtensions = string.Join(", ", PriorityExtensionsList);
         }
-        // --------------------------------------------------
 
         private void AddProcess()
         {
@@ -677,18 +678,19 @@ namespace EasySave.WPF.ViewModels
             }
         }
 
+        /// <summary>
+        /// Main entry point for starting one or multiple backup jobs.
+        /// 1. Prepares the list of jobs to run.
+        /// 2. Sets up progress, logging, and blocked process event handlers for each job.
+        /// 3. Launches each job in a separate Task for asynchronous execution.
+        /// 4. Handles real-time state logging (state.json) and transfer logging (logs.json).
+        /// </summary>
         private async void ExecuteJob()
         {
             var jobsToRun = new List<BackupJob>();
 
-            if (SelectedJobsList.Count > 0)
-            {
-                jobsToRun.AddRange(SelectedJobsList);
-            }
-            else if (SelectedJob != null)
-            {
-                jobsToRun.Add(SelectedJob);
-            }
+            if (SelectedJobsList.Count > 0) jobsToRun.AddRange(SelectedJobsList);
+            else if (SelectedJob != null) jobsToRun.Add(SelectedJob);
 
             if (jobsToRun.Count == 0) return;
 
@@ -700,13 +702,13 @@ namespace EasySave.WPF.ViewModels
 
             foreach (var job in jobsToRun)
             {
+                // Handler for incremental progress updates and state.json synchronization
                 EventHandler<BackupProgressEventArgs> progressHandler = (sender, args) =>
                 {
                     Application.Current.Dispatcher.InvokeAsync(() =>
                     {
                         ProgressValue = args.Percentage;
                         StatusMessage = $"{job.Name}: {args.Percentage}%";
-
                         job.Progress = args.Percentage;
 
                         var stateLog = new StateLog
@@ -726,6 +728,7 @@ namespace EasySave.WPF.ViewModels
                     });
                 };
 
+                // Handler for logging completed file transfers
                 EventHandler<(string source, string target, long size, float time, float encryptionTime)> fileCopiedHandler = (sender, data) =>
                 {
                     Task.Run(() =>
@@ -743,6 +746,7 @@ namespace EasySave.WPF.ViewModels
                     });
                 };
 
+                // Handler for blocked business processes (automatic pause)
                 EventHandler<string> blockedProcessHandler = (sender, processName) =>
                 {
                     Application.Current.Dispatcher.Invoke(() =>
@@ -751,30 +755,27 @@ namespace EasySave.WPF.ViewModels
                         StatusMessage = $"{ResourceSettings.GetString("Error")} : {message}";
                         CommandManager.InvalidateRequerySuggested();
 
-                        MessageBox.Show(
-                            message,
-                            ResourceSettings.GetString("Error"),
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning
-                        );
+                        MessageBox.Show(message, ResourceSettings.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
                     });
                 };
 
+                // Subscribe to job events
                 job.OnProgressUpdate += progressHandler;
                 job.OnFileCopied += fileCopiedHandler;
                 job.OnBlockedProcessDetected += blockedProcessHandler;
 
+                // Run the job execution in a background task
                 var task = Task.Run(() =>
                 {
                     try
                     {
                         job.Execute();
 
+                        // Final state update on completion
                         Application.Current.Dispatcher.Invoke(() =>
                         {
                             job.Progress = 100;
-
-                            var finalState = new StateLog
+                            StateSettings.UpdateState(new StateLog
                             {
                                 BackupName = job.Name,
                                 Timestamp = DateTime.Now,
@@ -782,8 +783,7 @@ namespace EasySave.WPF.ViewModels
                                 Progression = 100,
                                 SourceFilePath = "Terminé",
                                 TargetFilePath = ""
-                            };
-                            StateSettings.UpdateState(finalState);
+                            });
                             CommandManager.InvalidateRequerySuggested();
                         });
                     }
@@ -798,6 +798,7 @@ namespace EasySave.WPF.ViewModels
                     }
                     finally
                     {
+                        // Clean up event subscriptions
                         job.OnProgressUpdate -= progressHandler;
                         job.OnFileCopied -= fileCopiedHandler;
                         job.OnBlockedProcessDetected -= blockedProcessHandler;
@@ -807,6 +808,7 @@ namespace EasySave.WPF.ViewModels
                 tasks.Add(task);
             }
 
+            // Wait for all initiated tasks to complete
             await Task.WhenAll(tasks);
 
             Application.Current.Dispatcher.Invoke(() =>
@@ -821,10 +823,7 @@ namespace EasySave.WPF.ViewModels
 
         public class LanguageProxy
         {
-            public string this[string key]
-            {
-                get => ResourceSettings.GetString(key);
-            }
+            public string this[string key] => ResourceSettings.GetString(key);
         }
     }
 }

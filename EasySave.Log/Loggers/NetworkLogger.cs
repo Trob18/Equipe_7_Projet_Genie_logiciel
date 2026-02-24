@@ -1,4 +1,4 @@
-﻿using EasySave.Log.Interfaces;
+using EasySave.Log.Interfaces;
 using EasySave.Log.Models;
 using System;
 using System.IO;
@@ -22,6 +22,9 @@ namespace EasySave.Log.Loggers
             _serverIp = string.IsNullOrWhiteSpace(serverIp) ? "127.0.0.1" : serverIp;
         }
 
+        /// <summary>
+        /// Sends a log entry over the network to a specified log server via TCP.
+        /// </summary>
         public void WriteLog(LogEntry logEntry)
         {
             try
@@ -59,7 +62,7 @@ namespace EasySave.Log.Loggers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[NetworkLogger Error] Impossible d'envoyer le log : {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[NetworkLogger Error] Could not send log: {ex.Message}");
             }
         }
     }

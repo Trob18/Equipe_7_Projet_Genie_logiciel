@@ -1,4 +1,4 @@
-﻿using EasySave.WPF.Config;
+using EasySave.WPF.Config;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -36,6 +36,9 @@ namespace EasySave.WPF.State
             }
         }
 
+        /// <summary>
+        /// Updates or adds a backup state entry in the state tracking JSON file.
+        /// </summary>
         public static void UpdateState(StateLog stateLog)
         {
             lock (_writeLock)
